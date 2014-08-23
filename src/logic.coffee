@@ -1,6 +1,7 @@
 _ = require 'underscore'
 {Vector2, Rect2} = require './geometry'
 store = require './store'
+keyboard = require './keyboard'
 {
   ImageStore, TILE_SIZE, CharacterType, drawTile, drawTile, SRC_TILE_SIZE
 } = store
@@ -59,7 +60,7 @@ class LogicalTileMap extends TileMap
   getValue: (position) -> @layers[0][position.y][position.x]
 
 
-SPEED = 2  # tiles per second
+SPEED = 4  # tiles per second
 SPEED_PX = TILE_SIZE.multiply(SPEED)
 
 
@@ -89,7 +90,6 @@ class Actor
     @targetWorldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
 
   update: (dt) ->
-    debugger if dt > 0.5
     unless @worldPosition.isEqual(@targetWorldPosition)
       @worldPosition = approach(
         @worldPosition, @targetWorldPosition, SPEED_PX.multiply(dt))
@@ -100,6 +100,17 @@ class Actor
   getShouldDecide: -> @worldPosition.isEqual(@targetWorldPosition)
 
   decide: ->
+    tilePositionChange = new Vector2(0, 0)
+    if keyboard.getIsKeyDown('left')
+      tilePositionChange.x -= 1
+    if keyboard.getIsKeyDown('up')
+      tilePositionChange.y -= 1
+    if keyboard.getIsKeyDown('right')
+      tilePositionChange.x += 1
+    if keyboard.getIsKeyDown('down')
+      tilePositionChange.y += 1
+
+    @setTilePosition @tilePosition.add tilePositionChange
 
 
 init = (canvas) ->
@@ -110,7 +121,7 @@ init = (canvas) ->
 
     playerType = new CharacterType(
       imageStore, 'Dawnlike_3/Characters/Player', new Vector2(0, 0), 500)
-    player = new Actor(playerType, new Vector2(0, 10))
+    player = new Actor(playerType, new Vector2(10, 10))
 
     ctx = canvas.getContext('2d')
 
