@@ -25,9 +25,8 @@ class TileType
 
 
 PRELOAD = [
-  'Dawnlike_3/Objects/Floor'
-  'Dawnlike_3/Characters/Player0'
-  'Dawnlike_3/Characters/Player1'
+  'Player0'
+  'Player1'
   'tiles'
 ]
 

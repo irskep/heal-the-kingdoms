@@ -120,7 +120,7 @@ init = (canvas) ->
     logicalMap = new LogicalTileMap(testMapLogicalData)
 
     playerType = new CharacterType(
-      imageStore, 'Dawnlike_3/Characters/Player', new Vector2(0, 0), 500)
+      imageStore, 'Player', new Vector2(0, 0), 500)
     player = new Actor(playerType, new Vector2(10, 10))
 
     ctx = canvas.getContext('2d')
