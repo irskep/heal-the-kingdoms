@@ -1,6 +1,7 @@
 class Vector2
   constructor: (@x, @y) ->
     throw "NaN" if isNaN(@x) or isNaN(@y)
+  multiply: (factor) -> new Vector2(@x * factor, @y * factor)
   pairMultiply: (other) -> new Vector2(@x * other.x, @y * other.y)
   pairDivide: (other) -> new Vector2(@x / other.x, @y / other.y)
 

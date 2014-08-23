@@ -1,6 +1,6 @@
 _ = require 'underscore'
 {Vector2, Rect2} = require './geometry'
-{ImageStore, TileTypeStore, TILE_SIZE} = require './store'
+{ImageStore, TileTypeStore, TILE_SIZE, CharacterType} = require './store'
 
 # fuck you internet
 window.requestAnimationFrame = (
@@ -35,8 +35,16 @@ init = (canvas) ->
       return tileTypeStore.tileTypes.test1
 
     ctx = canvas.getContext('2d')
-    requestId = requestAnimationFrame ->
+    testCharacterType = new CharacterType(
+      imageStore, 'Characters/Player', new Vector2(0, 0), 500)
+    animate = ->
       map.render(ctx, new Rect2(0, 0, canvas.width, canvas.height))
+      testCharacterType.render(ctx, new Vector2(100, 100))
+
+    run = ->
+      animate()
+      requestAnimationFrame(run)
+    requestAnimationFrame(run)
 
 
 module.exports = {init}
