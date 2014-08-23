@@ -4,6 +4,10 @@ class Vector2
   multiply: (factor) -> new Vector2(@x * factor, @y * factor)
   pairMultiply: (other) -> new Vector2(@x * other.x, @y * other.y)
   pairDivide: (other) -> new Vector2(@x / other.x, @y / other.y)
+  isEqual: (other) -> @x == other.x and @y == other.y
+  clone: -> new Vector2(@x, @y)
+
+  add: (other) -> new Vector2(@x + other.x, @y + other.y)
 
 
 class Rect2

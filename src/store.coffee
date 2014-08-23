@@ -7,27 +7,31 @@ TILE_SIZE = SRC_TILE_SIZE.multiply(2)
 #TILE_SIZE = SRC_TILE_SIZE
 
 
+drawTile = (sourceImage, sourceCoordinates, ctx, position) ->
+  ctx.imageSmoothingEnabled = false
+  ctx.drawImage(
+    sourceImage,
+    sourceCoordinates.x * SRC_TILE_SIZE.x,
+    sourceCoordinates.y * SRC_TILE_SIZE.y,
+    SRC_TILE_SIZE.x, SRC_TILE_SIZE.y,
+    position.x, position.y,
+    TILE_SIZE.x, TILE_SIZE.y)
+
+
 class TileType
   constructor: (@sourceImage, @sourceCoordinates) ->
   render: (ctx, position) ->
-    ctx.imageSmoothingEnabled = false
-    ctx.drawImage(
-      @sourceImage,
-      @sourceCoordinates.x * SRC_TILE_SIZE.x,
-      @sourceCoordinates.y * SRC_TILE_SIZE.y,
-      SRC_TILE_SIZE.x, SRC_TILE_SIZE.y,
-      position.x, position.y,
-      TILE_SIZE.x, TILE_SIZE.y)
-
+    drawTile(@sourceImage, @sourceCoordinates, ctx, position)
 
 
 PRELOAD = [
-  'Objects/Floor'
-  'Characters/Player0'
-  'Characters/Player1'
+  'Dawnlike_3/Objects/Floor'
+  'Dawnlike_3/Characters/Player0'
+  'Dawnlike_3/Characters/Player1'
+  'tiles'
 ]
 
-getImageUrl = (identifier) -> "img/DawnLike_3/#{identifier}.png"
+getImageUrl = (identifier) -> "img/#{identifier}.png"
 
 
 class ImageStore
@@ -38,20 +42,12 @@ class ImageStore
     for identifier in PRELOAD
       img = new Image()
       src = getImageUrl(identifier)
-      @images[src] = img
+      @images[identifier] = img
       img.onload = =>
         @loadedCount += 1
         if @loadedCount == _.size @images
           @loadedCallback()
       img.src = src
-
-
-class TileTypeStore
-  constructor: (@imageStore) ->
-    @tileTypes = {
-      test1: new TileType(
-        @imageStore.images[getImageUrl('Objects/Floor')], new Vector2(1, 4)),
-    }
 
 
 class CharacterType
@@ -60,9 +56,9 @@ class CharacterType
     @animationOffset = _.random(@animationPeriod - 1)
     @frameTileTypes = [
       new TileType(
-        @imageStore.images[getImageUrl(@imageName + '0')], @sourceCoordinates),
+        @imageStore.images[@imageName + '0'], @sourceCoordinates),
       new TileType(
-        @imageStore.images[getImageUrl(@imageName + '1')], @sourceCoordinates),
+        @imageStore.images[@imageName + '1'], @sourceCoordinates),
     ]
 
   render: (ctx, position) ->
@@ -71,4 +67,6 @@ class CharacterType
 
 
 module.exports = {
-  TileType, ImageStore, TileTypeStore, TILE_SIZE, CharacterType}
+  TileType, ImageStore, TILE_SIZE, CharacterType, drawTile, getImageUrl,
+  SRC_TILE_SIZE
+}
