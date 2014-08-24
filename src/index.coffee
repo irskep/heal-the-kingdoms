@@ -50,7 +50,9 @@ GameView = React.createClass
     if @state.isLoaded and @state.gameState
       <div>
         <p>
-          Move with WASD. Switch levels with the number keys.
+          Move with WASD. Drop items by clicking on them in the inventory bar.
+
+          Switch levels with the number keys. 
         </p>
         <Inventory items={@state.gameState.inventory}
                    sceneManager={@state.sceneManager} />
@@ -62,7 +64,7 @@ GameView = React.createClass
 Inventory = React.createClass
   displayName: 'Inventory'
   render: ->
-    <div style={{width: WIDTH, height: 32, backgroundColor: color.brown}}>
+    <div style={{width: WIDTH, height: 32}} className="inventory">
       {_.map @props.items, (item) =>
         <InventoryItem item={item} style={{float: 'left'}}
         onClick={=> @props.sceneManager.sendMessage({type: 'dropItem', item})}
