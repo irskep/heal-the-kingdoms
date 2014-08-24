@@ -15,6 +15,7 @@ _.choice = (options, weights = null, totalWeight = null) ->
 
 
 {Vector2, Rect2} = require './geometry'
+color = require './color'
 store = require './store'
 keyboard = require './keyboard'
 {
@@ -32,8 +33,10 @@ window.requestAnimationFrame = (
 
 
 class TileMap
-  @worldCoordsToTileCoords: (worldPoint) -> worldPoint.pairDivide(TILE_SIZE)
-  @tileCoordsToWorldCoords: (tilePoint) -> tilePoint.pairMultiply(TILE_SIZE)
+  @worldCoordsToTileCoords: (worldPoint, floorOrCeil='floor') ->
+    worldPoint.pairDivide(TILE_SIZE)[floorOrCeil]()
+  @tileCoordsToWorldCoords: (tilePoint) ->
+    tilePoint.pairMultiply(TILE_SIZE)
 
   constructor: (@mapData) ->
     @size = new Vector2(
@@ -52,8 +55,8 @@ class DrawableTileMap extends TileMap
           new Vector2(index % imageColumns, Math.floor(index / imageColumns))
 
   render: (ctx, worldRect) ->
-    worldRectMin = TileMap.worldCoordsToTileCoords(worldRect.getMin())
-    worldRectMax = TileMap.worldCoordsToTileCoords(worldRect.getMax())
+    worldRectMin = TileMap.worldCoordsToTileCoords(worldRect.getMin(), 'floor')
+    worldRectMax = TileMap.worldCoordsToTileCoords(worldRect.getMax(), 'ceil')
     startX = Math.max(0, worldRectMin.x)
     startY = Math.max(0, worldRectMin.y)
     endX = Math.min(@size.x, worldRectMax.x)
@@ -98,6 +101,8 @@ class Actor
   constructor: (@subject, @behaviors) ->
     @worldPosition = null  # you must set me
     _.each @behaviors, (b) => b.init(this)
+
+  getCenter: -> @worldPosition.add(TILE_SIZE.multiply(0.5))
 
   update: (dt) ->
     _.each @behaviors, (b) => b.update(dt)
@@ -179,6 +184,8 @@ class RandomWalkTileMovementBehavior extends TileMovementBehavior
 
 
 init = (canvas) ->
+  canvasSize = new Vector2(canvas.width, canvas.height)
+
   imageStore = new ImageStore ->
     drawableMap = new DrawableTileMap(
       imageStore.images['tiles'], testMapDrawData)
@@ -194,10 +201,11 @@ init = (canvas) ->
 
     playerSubject = new TwoFrameSubject(
       imageStore, 'Player', new Vector2(1, 0), 500)
-    actors.push new Actor(playerSubject, [
+    player = new Actor(playerSubject, [
       new KeyboardControlledTileMovementBehavior(
         logicalMap, new Vector2(10, 10)),
     ])
+    actors.push player
 
     ctx = canvas.getContext('2d')
 
@@ -205,8 +213,18 @@ init = (canvas) ->
       _.each actors, (a) -> a.update(dt)
 
     render = ->
-      drawableMap.render(ctx, new Rect2(0, 0, canvas.width, canvas.height))
+      ctx.fillStyle = color.darkgreen
+      ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+      ctx.save()
+      mapCenter = player.getCenter().floor()
+
+      ctx.translate(
+        -mapCenter.x + canvasSize.x / 2,
+        -mapCenter.y + canvasSize.y / 2)
+
+      drawableMap.render(ctx, Rect2.fromCenter(mapCenter, canvasSize))
       _.each actors, (a) -> a.render(ctx)
+      ctx.restore()
 
     lastTime = Date.now()
     run = ->
