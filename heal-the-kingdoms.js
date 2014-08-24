@@ -23507,7 +23507,7 @@ module.exports = warning;
 module.exports = "$black: rgb(20, 12, 28);\n\n$maroon: rgb(68, 36, 52);\n$purple: rgb(48, 52, 109);\n\n$darkgray: rgb(78, 74, 78);\n$lightgray: rgb(133, 149, 161);\n\n$brown: rgb(133, 76, 48);\n$darksand: rgb(117, 113, 97);\n$orange: rgb(210, 125, 44);\n\n$darkgreen: rgb(52, 101, 36);\n$green: rgb(109, 170, 44);\n$lightgreen: rgb(222, 238, 214);\n\n$red: rgb(208, 70, 72);\n$salmon: rgb(210, 170, 153);\n\n$skyblue: rgb(89, 125, 206);\n$teal: rgb(109, 194, 202);\n\n$yellow: rgb(218, 212, 94);\n";
 
 },{}],155:[function(require,module,exports){
-var Actor, Bacon, KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior, Rect2, TILE_SIZE, TileMap, TileMovementBehavior, Vector2, approach, color, keyboard, _, _ref,
+var Actor, AttackBehavior, Bacon, KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior, Rect2, TILE_SIZE, TileMap, TileMovementBehavior, Vector2, approach, color, keyboard, _, _ref,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -23578,7 +23578,7 @@ Actor = (function() {
 TileMovementBehavior = (function() {
   function TileMovementBehavior(tilePosition, speed) {
     this.tilePosition = tilePosition;
-    this.speed = speed;
+    this.speed = speed != null ? speed : 2;
   }
 
   TileMovementBehavior.prototype.init = function(actor) {
@@ -23668,7 +23668,7 @@ RandomWalkTileMovementBehavior = (function(_super) {
   function RandomWalkTileMovementBehavior(logicalMap, tilePosition, speed) {
     this.logicalMap = logicalMap;
     this.tilePosition = tilePosition;
-    this.speed = speed != null ? speed : 3;
+    this.speed = speed != null ? speed : 2;
     RandomWalkTileMovementBehavior.__super__.constructor.call(this, this.tilePosition, this.speed);
     this.greenLightTime = Date.now();
   }
@@ -23695,10 +23695,67 @@ RandomWalkTileMovementBehavior = (function(_super) {
 
 })(TileMovementBehavior);
 
+AttackBehavior = (function(_super) {
+  __extends(AttackBehavior, _super);
+
+  function AttackBehavior(_arg) {
+    this.logicalMap = _arg.logicalMap, this.tilePosition = _arg.tilePosition, this.getTarget = _arg.getTarget, this.onHit = _arg.onHit;
+    AttackBehavior.__super__.constructor.call(this, this.tilePosition);
+    this.moveTime = Date.now();
+  }
+
+  AttackBehavior.prototype.update = function(dt) {
+    var distanceToTarget, target;
+    AttackBehavior.__super__.update.call(this, dt);
+    target = this.getTarget();
+    if (!target) {
+      return;
+    }
+    distanceToTarget = target.worldPosition.subtract(this.actor.worldPosition).getLength();
+    if (distanceToTarget < TILE_SIZE.x / 3) {
+      return this.onHit(target);
+    }
+  };
+
+  AttackBehavior.prototype.decide = function() {
+    var chosenChange, maybeChanges, possibleChanges, target;
+    if (!(Date.now() >= this.moveTime)) {
+      return;
+    }
+    maybeChanges = _.shuffle([new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, -1), new Vector2(0, 1)]);
+    possibleChanges = _.filter(maybeChanges, (function(_this) {
+      return function(change) {
+        return _this.logicalMap.getIsPath(_this.tilePosition.add(change));
+      };
+    })(this));
+    target = this.getTarget();
+    if (!target) {
+      return;
+    }
+    chosenChange = _.min(possibleChanges, (function(_this) {
+      return function(change) {
+        return target.tilePosition.subtract(_this.tilePosition.add(change)).getLength();
+      };
+    })(this));
+    if (keyboard.getIsKeyDown('q')) {
+      debugger;
+    }
+    if (chosenChange) {
+      return this.setTilePosition(this.tilePosition.add(chosenChange));
+    } else {
+      return this.moveTime = Date.now() + _.random(250);
+    }
+  };
+
+  return AttackBehavior;
+
+})(TileMovementBehavior);
+
 module.exports = {
   Actor: Actor,
   KeyboardControlledTileMovementBehavior: KeyboardControlledTileMovementBehavior,
-  RandomWalkTileMovementBehavior: RandomWalkTileMovementBehavior
+  RandomWalkTileMovementBehavior: RandomWalkTileMovementBehavior,
+  AttackBehavior: AttackBehavior
 };
 
 
@@ -23766,6 +23823,14 @@ Vector2 = (function() {
 
   Vector2.prototype.add = function(other) {
     return new Vector2(this.x + other.x, this.y + other.y);
+  };
+
+  Vector2.prototype.subtract = function(other) {
+    return new Vector2(this.x - other.x, this.y - other.y);
+  };
+
+  Vector2.prototype.getLength = function() {
+    return Math.sqrt(this.x * this.x + this.y * this.y);
   };
 
   return Vector2;
@@ -23879,7 +23944,10 @@ window.keyboardSettings = {
   playerLeft: 'a',
   playerRight: 'd',
   playerUp: 'w',
-  playerDown: 's'
+  playerDown: 's',
+  playerAction: 'space',
+  playerStabLeft: ',',
+  playerStabRight: '.'
 };
 
 WIDTH = 768;
@@ -23891,12 +23959,7 @@ $(function() {
 HTKRoot = React.createClass({
   displayName: 'HTKRoot',
   render: function() {
-    return React.DOM.div(null, React.DOM.h1({
-      "style": {
-        marginTop: 0
-      },
-      "className": "title"
-    }, "Heal the Kingdoms"), GameView(null));
+    return React.DOM.div(null, GameView(null));
   }
 });
 
@@ -24224,7 +24287,7 @@ module.exports = keyboard;
 
 
 },{"./keyCodeToName":161,"baconjs":2}],163:[function(require,module,exports){
-var Actor, Bacon, DrawableTileMap, ImageStore, InventoryItem, InventoryMap, KeyboardControlledTileMovementBehavior, Level, LogicalTileMap, RandomWalkTileMovementBehavior, React, Rect2, SRC_TILE_SIZE, Scene, TILE_SIZE, TileSubject, TwoFrameSubject, Vector2, color, initImages, initInteractive, keyboard, util, _, _ref, _ref1, _ref2, _ref3,
+var Bacon, DrawableTileMap, ImageStore, InventoryItem, InventoryMap, Level, LogicalTileMap, Preamble, React, Rect2, Retry, SRC_TILE_SIZE, Scene, TILE_SIZE, TileSubject, TitleScreen, TwoFrameSubject, Vector2, actor, color, initImages, initInteractive, keyboard, util, _, _ref, _ref1, _ref2,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -24246,11 +24309,11 @@ _ref1 = require('./subject'), TwoFrameSubject = _ref1.TwoFrameSubject, TileSubje
 
 ImageStore = require('./imageStore').ImageStore;
 
-_ref2 = require('./actor'), Actor = _ref2.Actor, KeyboardControlledTileMovementBehavior = _ref2.KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior = _ref2.RandomWalkTileMovementBehavior;
+actor = require('./actor');
 
 InventoryItem = require('./inventory').InventoryItem;
 
-_ref3 = require('./tileMap'), DrawableTileMap = _ref3.DrawableTileMap, LogicalTileMap = _ref3.LogicalTileMap, InventoryMap = _ref3.InventoryMap;
+_ref2 = require('./tileMap'), DrawableTileMap = _ref2.DrawableTileMap, LogicalTileMap = _ref2.LogicalTileMap, InventoryMap = _ref2.InventoryMap;
 
 Scene = (function() {
   function Scene() {}
@@ -24267,14 +24330,113 @@ Scene = (function() {
 
 })();
 
+TitleScreen = (function() {
+  function TitleScreen() {}
+
+  TitleScreen.prototype.init = function(sceneManager) {
+    this.sceneManager = sceneManager;
+    return keyboard.downs(window.keyboardSettings.playerAction).take(1).onValue((function(_this) {
+      return function(_arg) {
+        var event;
+        event = _arg.event;
+        event.preventDefault();
+        return _this.sceneManager.setScene(_this.sceneManager.scenes["0-preamble"]);
+      };
+    })(this));
+  };
+
+  TitleScreen.prototype.update = function() {};
+
+  TitleScreen.prototype.render = function(ctx, canvasSize) {
+    ctx.save();
+    ctx.fillStyle = color.black;
+    ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+    ctx.font = '64pt Niconne';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = color.yellow;
+    ctx.fillText("Heal the Kingdoms", canvasSize.x / 2, canvasSize.y / 3);
+    ctx.font = '48pt Niconne';
+    ctx.fillText("Press " + window.keyboardSettings.playerAction + " to begin.", canvasSize.x / 2, canvasSize.y / 1.6);
+    return ctx.restore();
+  };
+
+  return TitleScreen;
+
+})();
+
+Retry = (function() {
+  function Retry(next) {
+    this.next = next;
+  }
+
+  Retry.prototype.init = function(sceneManager) {
+    this.sceneManager = sceneManager;
+    return keyboard.downs(window.keyboardSettings.playerAction).take(1).onValue((function(_this) {
+      return function(_arg) {
+        var event;
+        event = _arg.event;
+        event.preventDefault();
+        return _this.sceneManager.setScene(_this.sceneManager.scenes[_this.next]);
+      };
+    })(this));
+  };
+
+  Retry.prototype.update = function() {};
+
+  Retry.prototype.render = function(ctx, canvasSize) {
+    ctx.save();
+    ctx.fillStyle = color.black;
+    ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+    ctx.font = '64pt Niconne';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = color.yellow;
+    ctx.fillText("You were killed.", canvasSize.x / 2, canvasSize.y / 3);
+    ctx.font = '48pt Niconne';
+    ctx.fillText("Press " + window.keyboardSettings.playerAction + " to try again.", canvasSize.x / 2, canvasSize.y / 1.6);
+    return ctx.restore();
+  };
+
+  return Retry;
+
+})();
+
+Preamble = (function() {
+  function Preamble(_arg) {
+    this.text = _arg.text, this.nextScene = _arg.nextScene;
+  }
+
+  Preamble.prototype.init = function(sceneManager) {
+    this.sceneManager = sceneManager;
+    return keyboard.downs(window.keyboardSettings.playerAction).take(1).onValue((function(_this) {
+      return function() {
+        return _this.sceneManager.setScene(_this.sceneManager.scenes[_this.nextScene]);
+      };
+    })(this));
+  };
+
+  Preamble.prototype.update = function() {};
+
+  Preamble.prototype.render = function(ctx, canvasSize) {
+    ctx.save();
+    ctx.fillStyle = color.black;
+    ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+    ctx.font = '24pt Niconne';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = color.yellow;
+    ctx.fillText(this.text, 20, 30, canvasSize.x - 40);
+    ctx.fillText("Press " + window.keyboardSettings.playerAction + " to continue.", 20, canvasSize.y - 10);
+    return ctx.restore();
+  };
+
+  return Preamble;
+
+})();
+
 Level = (function(_super) {
   __extends(Level, _super);
 
-  function Level(imageStore, logicalData, drawData, scripts) {
-    this.imageStore = imageStore;
-    this.logicalData = logicalData;
-    this.drawData = drawData;
-    this.scripts = scripts;
+  function Level(_arg) {
+    this.imageStore = _arg.imageStore, this.logicalData = _arg.logicalData, this.drawData = _arg.drawData, this.scripts = _arg.scripts;
     this.drawableMap = new DrawableTileMap(this.imageStore.images['tiles'], this.drawData);
     this.logicalMap = new LogicalTileMap(this.logicalData);
     this.textMap = (function() {
@@ -24289,8 +24451,8 @@ Level = (function(_super) {
       };
       return {
         getText: function(position) {
-          var _ref4;
-          return (_ref4 = data[position.y]) != null ? _ref4[position.x] : void 0;
+          var _ref3;
+          return (_ref3 = data[position.y]) != null ? _ref3[position.x] : void 0;
         }
       };
     })();
@@ -24298,12 +24460,12 @@ Level = (function(_super) {
   }
 
   Level.prototype.init = function(sceneManager) {
-    var npcSubject, playerSubject, position, validPositions, x, y, _i, _j, _ref4, _ref5;
+    var kill, npcSubject, playerSubject, position, stabs, validPositions, x, y, _i, _j, _ref3, _ref4;
     this.sceneManager = sceneManager;
     this.actors = [];
     validPositions = [];
-    for (y = _i = 0, _ref4 = this.logicalMap.size.y; 0 <= _ref4 ? _i < _ref4 : _i > _ref4; y = 0 <= _ref4 ? ++_i : --_i) {
-      for (x = _j = 0, _ref5 = this.logicalMap.size.x; 0 <= _ref5 ? _j < _ref5 : _j > _ref5; x = 0 <= _ref5 ? ++_j : --_j) {
+    for (y = _i = 0, _ref3 = this.logicalMap.size.y; 0 <= _ref3 ? _i < _ref3 : _i > _ref3; y = 0 <= _ref3 ? ++_i : --_i) {
+      for (x = _j = 0, _ref4 = this.logicalMap.size.x; 0 <= _ref4 ? _j < _ref4 : _j > _ref4; x = 0 <= _ref4 ? ++_j : --_j) {
         position = new Vector2(x, y);
         if (this.logicalMap.getIsPath(position)) {
           validPositions.push(position);
@@ -24311,12 +24473,58 @@ Level = (function(_super) {
       }
     }
     this.inventoryMap = new InventoryMap(this.imageStore.images['DawnLike_3/Items/Boot'], validPositions, this.logicalData);
+    kill = (function(_this) {
+      return function(target) {
+        var _base, _base1;
+        _this.npcs = _.without(_this.npcs, target);
+        _this.actors = _.without(_this.actors, target);
+        if (target === _this.player) {
+          return typeof (_base = _this.scripts).onPlayerDeath === "function" ? _base.onPlayerDeath(target) : void 0;
+        } else {
+          return typeof (_base1 = _this.scripts).onNPCDeath === "function" ? _base1.onNPCDeath(target) : void 0;
+        }
+      };
+    })(this);
+    this.npcs = [];
     npcSubject = new TwoFrameSubject(this.imageStore, 'Player', 0, 500);
-    this.actors.push(new Actor(npcSubject, [new RandomWalkTileMovementBehavior(this.logicalMap, _.choice(validPositions))]));
+    this.npcs.push(new actor.Actor(npcSubject, [
+      new actor.AttackBehavior({
+        logicalMap: this.logicalMap,
+        tilePosition: _.choice(validPositions),
+        getTarget: ((function(_this) {
+          return function() {
+            return _this.player;
+          };
+        })(this)),
+        onHit: ((function(_this) {
+          return function() {
+            return kill(_this.player);
+          };
+        })(this))
+      })
+    ]));
+    _.each(this.npcs, (function(_this) {
+      return function(npc) {
+        return _this.actors.push(npc);
+      };
+    })(this));
     playerSubject = new TwoFrameSubject(this.imageStore, 'Player', 1, 500);
-    this.player = new Actor(playerSubject, [new KeyboardControlledTileMovementBehavior(this.logicalMap, this.logicalMap.getPlayerStartingPosition())]);
+    this.player = new actor.Actor(playerSubject, [new actor.KeyboardControlledTileMovementBehavior(this.logicalMap, this.logicalMap.getPlayerStartingPosition())]);
     this.actors.push(this.player);
-    this.teardowns.push(keyboard.downs('space').onValue((function(_this) {
+    stabs = (keyboard.downs(window.keyboardSettings.playerStabLeft).map(new Vector2(-1, 0))).merge(keyboard.downs(window.keyboardSettings.playerStabRight).map(new Vector2(1, 0)));
+    this.teardowns.push(stabs.onValue((function(_this) {
+      return function(stab) {
+        var stabTarget, stabTargetPosition;
+        stabTargetPosition = _this.player.tilePosition.add(stab);
+        stabTarget = _.find(_this.npcs, function(npc) {
+          return npc.tilePosition.isEqual(stabTargetPosition);
+        });
+        if (stabTarget) {
+          return kill(stabTarget);
+        }
+      };
+    })(this)));
+    this.teardowns.push(keyboard.downs(window.keyboardSettings.playerAction).onValue((function(_this) {
       return function(_arg) {
         var event, item;
         event = _arg.event;
@@ -24374,6 +24582,17 @@ Level = (function(_super) {
     _.each(this.actors, function(a) {
       return a.render(ctx);
     });
+    if (keyboard.getIsKeyDown(window.keyboardSettings.playerStabLeft)) {
+      ctx.fillStyle = 'red';
+      ctx.beginPath();
+      ctx.arc(this.player.worldPosition.x - TILE_SIZE.x / 2, this.player.worldPosition.y + TILE_SIZE.y / 2, TILE_SIZE.x / 4, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (keyboard.getIsKeyDown(window.keyboardSettings.playerStabRight)) {
+      ctx.fillStyle = 'red';
+      ctx.beginPath();
+      ctx.arc(this.player.worldPosition.x + TILE_SIZE.x * 1.5, this.player.worldPosition.y + TILE_SIZE.y / 2, TILE_SIZE.x / 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
     return ctx.restore();
   };
 
@@ -24389,8 +24608,33 @@ initInteractive = function(imageStore) {
   var currentScene, sceneManager, scenes, state, stateUpdates;
   currentScene = null;
   scenes = {
-    "1": new Level(imageStore, require('./maps/1_cave_logical'), require('./maps/1_cave'), {}),
-    "0": new Level(imageStore, require('./maps/test_logical'), require('./maps/test'), {})
+    "0-preamble": new Preamble({
+      text: "You are about to begin the test level.",
+      nextScene: "0-level"
+    }),
+    "0-level": new Level({
+      imageStore: imageStore,
+      logicalData: require('./maps/test_logical'),
+      drawData: require('./maps/test'),
+      scripts: {
+        onPlayerDeath: function() {
+          return sceneManager.setScene(new Retry('0-level'));
+        },
+        onNPCDeath: function(stabTarget) {
+          return console.log("You killed", stabTarget);
+        }
+      }
+    }),
+    "1-preamble": new Preamble({
+      text: "You are about to begin level 1.",
+      nextScene: "1-level"
+    }),
+    "1-level": new Level({
+      imageStore: imageStore,
+      logicalData: require('./maps/1_cave_logical'),
+      drawData: require('./maps/1_cave'),
+      scripts: {}
+    })
   };
   state = {
     inventory: [],
@@ -24418,12 +24662,7 @@ initInteractive = function(imageStore) {
       return currentScene != null ? currentScene.onMessage(message) : void 0;
     }
   };
-  sceneManager.setScene(scenes["1"]);
-  _.each(scenes, function(scene, key) {
-    return keyboard.downs(key).onValue(function() {
-      return sceneManager.setScene(scene);
-    });
-  });
+  sceneManager.setScene(new TitleScreen());
   return {
     run: function(canvas) {
       var canvasSize, ctx, _run;
