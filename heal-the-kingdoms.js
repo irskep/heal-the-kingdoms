@@ -23808,12 +23808,38 @@ module.exports = keyboard;
 
 
 },{"./keyCodeToName":158,"baconjs":2}],160:[function(require,module,exports){
-var Actor, CharacterType, DrawableTileMap, ImageStore, LogicalTileMap, Rect2, SPEED, SPEED_PX, SRC_TILE_SIZE, TILE_SIZE, TileMap, Vector2, approach, drawTile, init, keyboard, store, testMapDrawData, testMapLogicalData, _, _ref,
+var Actor, DrawableTileMap, ImageStore, LogicalTileMap, RandomWalkTileMovementBehavior, Rect2, SRC_TILE_SIZE, TILE_SIZE, TileMap, TileMovementBehavior, TwoFrameSubject, Vector2, approach, drawTile, init, keyboard, store, testMapDrawData, testMapLogicalData, _, _ref,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __slice = [].slice;
 
 _ = require('underscore');
+
+_.choice = function(options, weights, totalWeight) {
+  var i, r, total, upto, _i, _ref;
+  if (weights == null) {
+    weights = null;
+  }
+  if (totalWeight == null) {
+    totalWeight = null;
+  }
+  if (!(options != null ? options.length : void 0)) {
+    return null;
+  }
+  if (!weights) {
+    return options[_.random(0, options.length - 1)];
+  }
+  total = totalWeight || _.sum(weights);
+  r = Math.random() * total;
+  upto = 0;
+  for (i = _i = 0, _ref = weights.length; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+    if (upto + weights[i] > r) {
+      return options[i];
+    }
+    upto += weights[i];
+  }
+  throw "Shouldn't get here";
+};
 
 _ref = require('./geometry'), Vector2 = _ref.Vector2, Rect2 = _ref.Rect2;
 
@@ -23821,7 +23847,7 @@ store = require('./store');
 
 keyboard = require('./keyboard');
 
-ImageStore = store.ImageStore, TILE_SIZE = store.TILE_SIZE, CharacterType = store.CharacterType, drawTile = store.drawTile, drawTile = store.drawTile, SRC_TILE_SIZE = store.SRC_TILE_SIZE;
+ImageStore = store.ImageStore, TILE_SIZE = store.TILE_SIZE, TwoFrameSubject = store.TwoFrameSubject, drawTile = store.drawTile, drawTile = store.drawTile, SRC_TILE_SIZE = store.SRC_TILE_SIZE;
 
 testMapDrawData = require('./maps/test');
 
@@ -23899,19 +23925,24 @@ LogicalTileMap = (function(_super) {
     var args;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
     LogicalTileMap.__super__.constructor.apply(this, args);
+    this.data = this.mapData.layers[0];
   }
 
   LogicalTileMap.prototype.getValue = function(position) {
-    return this.layers[0][position.y][position.x];
+    if ((this.data[position.y] != null) && (this.data[position.y][position.x] != null)) {
+      return this.data[position.y][position.x];
+    } else {
+      return null;
+    }
+  };
+
+  LogicalTileMap.prototype.getIsWalkable = function(position) {
+    return this.getValue(position) === 1;
   };
 
   return LogicalTileMap;
 
 })(TileMap);
-
-SPEED = 4;
-
-SPEED_PX = TILE_SIZE.multiply(SPEED);
 
 approach = function(currentPosition, targetPosition, maxMove) {
   var newPosition;
@@ -23932,73 +23963,123 @@ approach = function(currentPosition, targetPosition, maxMove) {
 };
 
 Actor = (function() {
-  function Actor(type, tilePosition) {
-    this.type = type;
-    this.tilePosition = tilePosition;
-    this.worldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
-    this.targetWorldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
-    this.decide();
+  function Actor(subject, behaviors) {
+    this.subject = subject;
+    this.behaviors = behaviors;
+    this.worldPosition = null;
+    _.each(this.behaviors, (function(_this) {
+      return function(b) {
+        return b.init(_this);
+      };
+    })(this));
   }
 
-  Actor.prototype.render = function(ctx) {
-    return this.type.render(ctx, this.worldPosition);
-  };
-
-  Actor.prototype.setTilePosition = function(newTilePosition) {
-    this.tilePosition = newTilePosition;
-    return this.targetWorldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
-  };
-
   Actor.prototype.update = function(dt) {
-    if (!this.worldPosition.isEqual(this.targetWorldPosition)) {
-      this.worldPosition = approach(this.worldPosition, this.targetWorldPosition, SPEED_PX.multiply(dt));
-    }
-    if (this.getShouldDecide()) {
-      return this.decide();
-    }
+    return _.each(this.behaviors, (function(_this) {
+      return function(b) {
+        return b.update(dt);
+      };
+    })(this));
   };
 
-  Actor.prototype.getShouldDecide = function() {
-    return this.worldPosition.isEqual(this.targetWorldPosition);
-  };
-
-  Actor.prototype.decide = function() {
-    var tilePositionChange;
-    tilePositionChange = new Vector2(0, 0);
-    if (keyboard.getIsKeyDown('left')) {
-      tilePositionChange.x -= 1;
-    }
-    if (keyboard.getIsKeyDown('up')) {
-      tilePositionChange.y -= 1;
-    }
-    if (keyboard.getIsKeyDown('right')) {
-      tilePositionChange.x += 1;
-    }
-    if (keyboard.getIsKeyDown('down')) {
-      tilePositionChange.y += 1;
-    }
-    return this.setTilePosition(this.tilePosition.add(tilePositionChange));
+  Actor.prototype.render = function(ctx) {
+    return this.subject.render(ctx, this.worldPosition);
   };
 
   return Actor;
 
 })();
 
+TileMovementBehavior = (function() {
+  function TileMovementBehavior(tilePosition) {
+    this.tilePosition = tilePosition;
+  }
+
+  TileMovementBehavior.prototype.init = function(actor) {
+    this.actor = actor;
+    this.actor.worldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
+    this.targetWorldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
+    console.log('boom');
+    return this.decide();
+  };
+
+  TileMovementBehavior.prototype.setTilePosition = function(newTilePosition) {
+    this.tilePosition = newTilePosition;
+    return this.targetWorldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
+  };
+
+  TileMovementBehavior.prototype.update = function(dt) {
+    var SPEED, SPEED_PX;
+    SPEED = 4;
+    SPEED_PX = TILE_SIZE.multiply(SPEED);
+    if (!this.actor.worldPosition.isEqual(this.targetWorldPosition)) {
+      this.actor.worldPosition = approach(this.actor.worldPosition, this.targetWorldPosition, SPEED_PX.multiply(dt));
+    }
+    if (this.getShouldDecide()) {
+      return this.decide();
+    }
+  };
+
+  TileMovementBehavior.prototype.getShouldDecide = function() {
+    return this.actor.worldPosition.isEqual(this.targetWorldPosition);
+  };
+
+  TileMovementBehavior.prototype.decide = function() {
+    throw "not implemented";
+  };
+
+  return TileMovementBehavior;
+
+})();
+
+RandomWalkTileMovementBehavior = (function(_super) {
+  __extends(RandomWalkTileMovementBehavior, _super);
+
+  function RandomWalkTileMovementBehavior() {
+    var args, logicalMap;
+    logicalMap = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+    this.logicalMap = logicalMap;
+    RandomWalkTileMovementBehavior.__super__.constructor.apply(this, args);
+  }
+
+  RandomWalkTileMovementBehavior.prototype.decide = function() {
+    var chosenChange, possibleChanges;
+    possibleChanges = [new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, -1), new Vector2(0, 1)];
+    chosenChange = _.choice(_.filter(possibleChanges, (function(_this) {
+      return function(change) {
+        return _this.logicalMap.getIsWalkable(_this.tilePosition.add(change));
+      };
+    })(this)));
+    if (!chosenChange) {
+      return;
+    }
+    return this.setTilePosition(this.tilePosition.add(chosenChange));
+  };
+
+  return RandomWalkTileMovementBehavior;
+
+})(TileMovementBehavior);
+
 init = function(canvas) {
   var imageStore;
   return imageStore = new ImageStore(function() {
-    var ctx, drawableMap, lastTime, logicalMap, player, playerType, render, run, update;
+    var actors, ctx, drawableMap, lastTime, logicalMap, npcSubject, render, run, update;
     drawableMap = new DrawableTileMap(imageStore.images['tiles'], testMapDrawData);
     logicalMap = new LogicalTileMap(testMapLogicalData);
-    playerType = new CharacterType(imageStore, 'Player', new Vector2(0, 0), 500);
-    player = new Actor(playerType, new Vector2(10, 10));
+    actors = [];
+    npcSubject = new TwoFrameSubject(imageStore, 'Player', new Vector2(0, 0), 500);
+    actors.push(new Actor(npcSubject, [new RandomWalkTileMovementBehavior(logicalMap, new Vector2(10, 10))]));
     ctx = canvas.getContext('2d');
     update = function(dt) {
-      return player.update(dt);
+      return _.each(actors, function(a) {
+        return a.update(dt);
+      });
     };
     render = function() {
       drawableMap.render(ctx, new Rect2(0, 0, canvas.width, canvas.height));
-      return player.render(ctx);
+      return _.each(actors, function(a) {
+        return a.render(ctx);
+      });
     };
     lastTime = Date.now();
     run = function() {
@@ -24074,7 +24155,7 @@ module.exports = {
 
 
 },{"underscore":153}],165:[function(require,module,exports){
-var CharacterType, ImageStore, PRELOAD, Rect2, SRC_TILE_SIZE, TILE_SIZE, TileType, Vector2, drawTile, getImageUrl, _, _ref;
+var ImageStore, PRELOAD, Rect2, SRC_TILE_SIZE, TILE_SIZE, TileType, TwoFrameSubject, Vector2, drawTile, getImageUrl, _, _ref;
 
 _ = require('underscore');
 
@@ -24136,8 +24217,8 @@ ImageStore = (function() {
 
 })();
 
-CharacterType = (function() {
-  function CharacterType(imageStore, imageName, sourceCoordinates, animationPeriod) {
+TwoFrameSubject = (function() {
+  function TwoFrameSubject(imageStore, imageName, sourceCoordinates, animationPeriod) {
     this.imageStore = imageStore;
     this.imageName = imageName;
     this.sourceCoordinates = sourceCoordinates;
@@ -24146,13 +24227,13 @@ CharacterType = (function() {
     this.frameTileTypes = [new TileType(this.imageStore.images[this.imageName + '0'], this.sourceCoordinates), new TileType(this.imageStore.images[this.imageName + '1'], this.sourceCoordinates)];
   }
 
-  CharacterType.prototype.render = function(ctx, position) {
+  TwoFrameSubject.prototype.render = function(ctx, position) {
     var i;
     i = Math.floor((Date.now() + this.animationOffset) / this.animationPeriod);
     return this.frameTileTypes[i % this.frameTileTypes.length].render(ctx, position);
   };
 
-  return CharacterType;
+  return TwoFrameSubject;
 
 })();
 
@@ -24160,7 +24241,7 @@ module.exports = {
   TileType: TileType,
   ImageStore: ImageStore,
   TILE_SIZE: TILE_SIZE,
-  CharacterType: CharacterType,
+  TwoFrameSubject: TwoFrameSubject,
   drawTile: drawTile,
   getImageUrl: getImageUrl,
   SRC_TILE_SIZE: SRC_TILE_SIZE
