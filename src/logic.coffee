@@ -21,8 +21,6 @@ keyboard = require './keyboard'
 {
   ImageStore, TILE_SIZE, TwoFrameSubject, drawTile, drawTile, SRC_TILE_SIZE
 } = store
-testMapDrawData = require './maps/test'
-testMapLogicalData = require './maps/test_logical'
 
 # fuck you internet
 window.requestAnimationFrame = (
@@ -195,24 +193,31 @@ class Level extends Scene
     @drawableMap = new DrawableTileMap(
       @imageStore.images['tiles'], @drawData)
     @logicalMap = new LogicalTileMap(@logicalData)
+
+  init: (@sceneManager) ->
     @actors = []
+
+    validPositions = []
+    for y in [0...@logicalMap.size.y]
+      for x in [0...@logicalMap.size.x]
+        position = new Vector2(x, y)
+        validPositions.push(position) if @logicalMap.getIsPath(position)
 
     npcSubject = new TwoFrameSubject(
       @imageStore, 'Player', new Vector2(0, 0), 500)
     @actors.push new Actor(npcSubject, [
-      new RandomWalkTileMovementBehavior(@logicalMap, new Vector2(5, 5)),
+      new RandomWalkTileMovementBehavior(
+        @logicalMap, _.choice(validPositions)),
     ])
 
     playerSubject = new TwoFrameSubject(
       @imageStore, 'Player', new Vector2(1, 0), 500)
     @player = new Actor(playerSubject, [
       new KeyboardControlledTileMovementBehavior(
-        @logicalMap, new Vector2(10, 10)),
+        @logicalMap, _.choice(validPositions)),
     ])
     @actors.push @player
 
-  init: (@sceneManager) ->
-    console.log 'init scene'
     @lastTime = Date.now()
 
   update: ->
@@ -222,7 +227,7 @@ class Level extends Scene
 
   render: (ctx, canvasSize) ->
     ctx.save()
-    ctx.fillStyle = color.darkgreen
+    ctx.fillStyle = color.black
     ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
     mapCenter = @player.getCenter().floor()
 
@@ -238,20 +243,31 @@ class Level extends Scene
 initImages = -> new ImageStore()
 
 
-initInteractive = (canvas, imageStore, firstScene=null) ->
+initInteractive = (canvas, imageStore) ->
   canvasSize = new Vector2(canvas.width, canvas.height)
   ctx = canvas.getContext('2d')
 
   currentScene = null
 
+  scenes = {
+    "1": new Level(
+      imageStore, require('./maps/1_cave_logical'), require('./maps/1_cave'),
+      {}),
+    "0": new Level(
+      imageStore, require('./maps/test_logical'), require('./maps/test'), {}),
+  }
+
   sceneManager =
+    scenes: scenes
     setScene: (newScene) ->
       currentScene?.teardown?()
       currentScene = newScene
       currentScene.init(sceneManager)
 
-  sceneManager.setScene(firstScene or new Level(
-    imageStore, testMapLogicalData, testMapDrawData, {}))
+  sceneManager.setScene(scenes["1"])
+
+  _.each scenes, (scene, key) ->
+    keyboard.downs(key).onValue -> sceneManager.setScene(scene)
 
   run = ->
     currentScene?.update()

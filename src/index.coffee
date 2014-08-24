@@ -26,6 +26,9 @@ HTKRoot = React.createClass
         Heal the Kingdoms
       </h1>
       <GameView />
+      <p>
+        Move with WASD. Switch levels with the number keys.
+      </p>
     </div>
 
 GameView = React.createClass
