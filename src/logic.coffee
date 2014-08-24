@@ -14,7 +14,6 @@ actor = require './actor'
 {DrawableTileMap, LogicalTileMap, InventoryMap} = require './tileMap'
 
 
-
 class Scene
   update: (t) -> throw "Not implemented"
   render: (ctx) -> throw "Not implemented"
@@ -119,6 +118,7 @@ class Level extends Scene
     kill = (target) =>
       return if target.deathTime
       target.deathTime = Date.now()
+      soundManager.play 'crash'
       callback = =>
         if target == @player
           @scripts.onPlayerDeath?(target)
@@ -153,6 +153,7 @@ class Level extends Scene
         .map(new Vector2(1, 0))
     )
     @teardowns.push(stabs.onValue (stab) =>
+      soundManager.play 'stab'
       stabTargetPosition = @player.tilePosition.add(stab)
       stabTarget = _.find @npcs, (npc) =>
         (npc.tilePosition.isEqual(@player.tilePosition) or
@@ -166,6 +167,7 @@ class Level extends Scene
         event.preventDefault()
         item = @inventoryMap.getItem(@player.tilePosition)
         if item
+          soundManager.play 'pickup'
           @inventoryMap.removeItem(@player.tilePosition)
           @sceneManager.getState().inventory.push(item)
           @sceneManager.notifyState()
@@ -186,6 +188,7 @@ class Level extends Scene
   onMessage: (message) ->
     if (message.type == 'dropItem' and
         not @inventoryMap.getItem(@player.tilePosition))
+      soundManager.play 'putdown'
       @inventoryMap.putItem(@player.tilePosition, message.item)
       @sceneManager.getState().inventory = _.without(
         @sceneManager.getState().inventory, message.item)
@@ -229,7 +232,21 @@ class Level extends Scene
     ctx.restore()
 
 
-initImages = -> new ImageStore()
+initImages = ->
+ soundManager.setup
+    # where to find flash audio SWFs, as needed
+    url: '/swf/',
+    # optional: prefer HTML5 over Flash for MP3/MP4
+    preferFlash: false,
+    debugMode: false,
+    onready: ->
+      _.each ['pickup', 'putdown', 'stab', 'crash'], (name) ->
+        soundManager.createSound
+          id: name
+          url: "audio/#{name}.wav"
+          multiShot: true
+          autoLoad: true
+  new ImageStore()
 
 
 initInteractive = (imageStore) ->
