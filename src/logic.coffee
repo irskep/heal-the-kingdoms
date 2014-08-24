@@ -81,7 +81,8 @@ class LogicalTileMap extends TileMap
       @data[position.y][position.x]
     else
       null
-  getIsWalkable: (position) -> @getValue(position) in [1, 3]
+  getIsPath: (position) -> @getValue(position) == 1
+  getIsDoor: (position) -> @getValue(position) == 3
 
 
 approach = (currentPosition, targetPosition, maxMove) ->
@@ -143,7 +144,8 @@ class KeyboardControlledTileMovementBehavior extends TileMovementBehavior
   decide: ->
     change = new Vector2(0, 0)
     w = (x, y) =>
-      @logicalMap.getIsWalkable(@tilePosition.add(new Vector2(x, y)))
+      p = @tilePosition.add(new Vector2(x, y))
+      @logicalMap.getIsPath(p) or @logicalMap.getIsDoor(p)
     if (keyboard.getIsKeyDown(window.keyboardSettings.playerLeft) and w(-1, 0))
       change.x -= 1
     if (keyboard.getIsKeyDown(window.keyboardSettings.playerRight) and w(1, 0))
@@ -175,7 +177,7 @@ class RandomWalkTileMovementBehavior extends TileMovementBehavior
       new Vector2(0, 1),
     ]
     chosenChange = _.choice [null].concat _.filter possibleChanges, (change) =>
-      @logicalMap.getIsWalkable(@tilePosition.add(change))
+      @logicalMap.getIsPath(@tilePosition.add(change))
 
     if chosenChange
       @setTilePosition @tilePosition.add chosenChange
