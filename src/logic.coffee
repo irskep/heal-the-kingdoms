@@ -1,9 +1,24 @@
 _ = require 'underscore'
+
+_.choice = (options, weights = null, totalWeight = null) ->
+  return null unless options?.length
+  return options[_.random(0, options.length - 1)] unless weights
+
+  total = totalWeight or _.sum(weights)
+  r = Math.random() * total
+  upto = 0
+  for i in [0..weights.length]
+     if upto + weights[i] > r
+        return options[i]
+     upto += weights[i]
+  throw "Shouldn't get here"
+
+
 {Vector2, Rect2} = require './geometry'
 store = require './store'
 keyboard = require './keyboard'
 {
-  ImageStore, TILE_SIZE, CharacterType, drawTile, drawTile, SRC_TILE_SIZE
+  ImageStore, TILE_SIZE, TwoFrameSubject, drawTile, drawTile, SRC_TILE_SIZE
 } = store
 testMapDrawData = require './maps/test'
 testMapLogicalData = require './maps/test_logical'
@@ -56,12 +71,14 @@ class LogicalTileMap extends TileMap
 
   constructor: (args...) ->
     super(args...)
+    @data = @mapData.layers[0]
 
-  getValue: (position) -> @layers[0][position.y][position.x]
-
-
-SPEED = 4  # tiles per second
-SPEED_PX = TILE_SIZE.multiply(SPEED)
+  getValue: (position) ->
+    if @data[position.y]? and @data[position.y][position.x]?
+      @data[position.y][position.x]
+    else
+      null
+  getIsWalkable: (position) -> @getValue(position) == 1
 
 
 approach = (currentPosition, targetPosition, maxMove) ->
@@ -78,39 +95,61 @@ approach = (currentPosition, targetPosition, maxMove) ->
 
 
 class Actor
-  constructor: (@type, @tilePosition) ->
-    @worldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
-    @targetWorldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
-    @decide()
+  constructor: (@subject, @behaviors) ->
+    @worldPosition = null  # you must set me
+    _.each @behaviors, (b) => b.init(this)
 
-  render: (ctx) -> @type.render(ctx, @worldPosition)
+  update: (dt) ->
+    _.each @behaviors, (b) => b.update(dt)
+
+  render: (ctx) -> @subject.render(ctx, @worldPosition)
+
+
+class TileMovementBehavior
+  constructor: (@tilePosition) ->
+
+  init: (@actor) ->
+    @actor.worldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
+    @targetWorldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
+    console.log 'boom'
+    @decide()
 
   setTilePosition: (newTilePosition) ->
     @tilePosition = newTilePosition
     @targetWorldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
 
   update: (dt) ->
-    unless @worldPosition.isEqual(@targetWorldPosition)
-      @worldPosition = approach(
-        @worldPosition, @targetWorldPosition, SPEED_PX.multiply(dt))
+    SPEED = 4  # tiles per second
+    SPEED_PX = TILE_SIZE.multiply(SPEED)
+    unless @actor.worldPosition.isEqual(@targetWorldPosition)
+      @actor.worldPosition = approach(
+        @actor.worldPosition, @targetWorldPosition, SPEED_PX.multiply(dt))
 
     if @getShouldDecide()
       @decide()
 
-  getShouldDecide: -> @worldPosition.isEqual(@targetWorldPosition)
+  getShouldDecide: -> @actor.worldPosition.isEqual(@targetWorldPosition)
+
+  decide: -> throw "not implemented"
+
+
+class RandomWalkTileMovementBehavior extends TileMovementBehavior
+
+  constructor: (@logicalMap, args...) ->
+    super(args...)
 
   decide: ->
-    tilePositionChange = new Vector2(0, 0)
-    if keyboard.getIsKeyDown('left')
-      tilePositionChange.x -= 1
-    if keyboard.getIsKeyDown('up')
-      tilePositionChange.y -= 1
-    if keyboard.getIsKeyDown('right')
-      tilePositionChange.x += 1
-    if keyboard.getIsKeyDown('down')
-      tilePositionChange.y += 1
+    possibleChanges = [
+      new Vector2(-1, 0),
+      new Vector2(1, 0),
+      new Vector2(0, -1),
+      new Vector2(0, 1),
+    ]
+    chosenChange = _.choice _.filter possibleChanges, (change) =>
+      @logicalMap.getIsWalkable(@tilePosition.add(change))
+    return unless chosenChange
 
-    @setTilePosition @tilePosition.add tilePositionChange
+    @setTilePosition @tilePosition.add chosenChange
 
 
 init = (canvas) ->
@@ -119,18 +158,22 @@ init = (canvas) ->
       imageStore.images['tiles'], testMapDrawData)
     logicalMap = new LogicalTileMap(testMapLogicalData)
 
-    playerType = new CharacterType(
+    actors = []
+
+    npcSubject = new TwoFrameSubject(
       imageStore, 'Player', new Vector2(0, 0), 500)
-    player = new Actor(playerType, new Vector2(10, 10))
+    actors.push new Actor(npcSubject, [
+      new RandomWalkTileMovementBehavior(logicalMap, new Vector2(10, 10)),
+    ])
 
     ctx = canvas.getContext('2d')
 
     update = (dt) ->
-      player.update(dt)
+      _.each actors, (a) -> a.update(dt)
 
     render = ->
       drawableMap.render(ctx, new Rect2(0, 0, canvas.width, canvas.height))
-      player.render(ctx)
+      _.each actors, (a) -> a.render(ctx)
 
     lastTime = Date.now()
     run = ->

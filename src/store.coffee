@@ -49,7 +49,7 @@ class ImageStore
       img.src = src
 
 
-class CharacterType
+class TwoFrameSubject
   constructor: (
       @imageStore, @imageName, @sourceCoordinates, @animationPeriod) ->
     @animationOffset = _.random(@animationPeriod - 1)
@@ -66,6 +66,6 @@ class CharacterType
 
 
 module.exports = {
-  TileType, ImageStore, TILE_SIZE, CharacterType, drawTile, getImageUrl,
+  TileType, ImageStore, TILE_SIZE, TwoFrameSubject, drawTile, getImageUrl,
   SRC_TILE_SIZE
 }
