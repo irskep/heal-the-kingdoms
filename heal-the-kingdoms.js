@@ -23588,6 +23588,7 @@ TileMovementBehavior = (function() {
 
   TileMovementBehavior.prototype.setTilePosition = function(newTilePosition) {
     this.tilePosition = newTilePosition;
+    this.actor.tilePosition = this.tilePosition;
     return this.targetWorldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
   };
 
@@ -23852,7 +23853,7 @@ module.exports = {
 
 
 },{"baconjs":2,"underscore":153}],159:[function(require,module,exports){
-var GameView, HTKRoot, Inventory, React, WIDTH, WorldView, color, logic, model, state, _;
+var GameView, HTKRoot, Inventory, InventoryItem, React, SRC_TILE_SIZE, TILE_SIZE, Vector2, WIDTH, WorldView, color, logic, model, state, _, _ref;
 
 _ = require('underscore');
 
@@ -23865,6 +23866,10 @@ logic = require('./logic');
 model = require('./model');
 
 color = require('./color');
+
+_ref = require('./subject'), TILE_SIZE = _ref.TILE_SIZE, SRC_TILE_SIZE = _ref.SRC_TILE_SIZE;
+
+Vector2 = require('./geometry').Vector2;
 
 window.keyboardSettings = {
   playerLeft: 'a',
@@ -23906,11 +23911,12 @@ GameView = React.createClass({
     });
     return imageStore.isComplete.filter(_.identity).onValue((function(_this) {
       return function() {
-        var run, _ref;
-        _ref = logic.initInteractive(imageStore), run = _ref.run, state = _ref.state;
+        var run, sceneManager, _ref1;
+        _ref1 = logic.initInteractive(imageStore), run = _ref1.run, state = _ref1.state, sceneManager = _ref1.sceneManager;
         _this.setState({
           isLoaded: true,
-          runGame: run
+          runGame: run,
+          sceneManager: sceneManager
         });
         return state.onValue(function(newState) {
           return _this.setState({
@@ -23925,7 +23931,8 @@ GameView = React.createClass({
       return React.DOM.div(null, WorldView({
         "runGame": this.state.runGame
       }), Inventory({
-        "items": this.state.gameState.inventory
+        "items": this.state.gameState.inventory,
+        "sceneManager": this.state.sceneManager
       }));
     } else {
       return React.DOM.span(null, "\"Still loading...\"");
@@ -23942,9 +23949,47 @@ Inventory = React.createClass({
       }
     }, _.map(this.props.items, (function(_this) {
       return function(item) {
-        return item.getComponent();
+        return InventoryItem({
+          "item": item,
+          "style": {
+            float: 'left'
+          },
+          "onClick": (function() {
+            return _this.props.sceneManager.sendMessage({
+              type: 'dropItem',
+              item: item
+            });
+          })
+        });
       };
-    })(this)));
+    })(this)), React.DOM.div({
+      "style": {
+        clear: 'both'
+      }
+    }));
+  }
+});
+
+InventoryItem = React.createClass({
+  displayName: 'InventoryItem',
+  render: function() {
+    var backgroundSize, offset, scale, tileSubject;
+    scale = TILE_SIZE.pairDivide(SRC_TILE_SIZE);
+    tileSubject = this.props.item.tileSubject;
+    backgroundSize = new Vector2(tileSubject.sourceImage.width, tileSubject.sourceImage.height).pairMultiply(scale);
+    offset = tileSubject.sourceCoordinates.pairMultiply(SRC_TILE_SIZE).pairMultiply(scale).multiply(-1);
+    return this.transferPropsTo(React.DOM.div({
+      "className": "pixel-art-sprite",
+      "style": {
+        width: TILE_SIZE.x,
+        height: TILE_SIZE.y,
+        position: 'relative',
+        overflow: 'hidden',
+        backgroundImage: "url(" + tileSubject.sourceImage.src + ")",
+        backgroundPosition: "" + offset.x + "px " + offset.y + "px",
+        backgroundSize: "" + backgroundSize.x + "px " + backgroundSize.y + "px"
+      }
+    }));
   }
 });
 
@@ -23977,12 +24022,14 @@ module.exports = {};
 
 
 
-},{"./color":156,"./logic":163,"./model":168,"./state":169,"react/addons":4,"underscore":153}],160:[function(require,module,exports){
-var InventoryItem, Rect2, TILE_SIZE, Vector2, _ref;
+},{"./color":156,"./geometry":157,"./logic":163,"./model":168,"./state":169,"./subject":170,"react/addons":4,"underscore":153}],160:[function(require,module,exports){
+var InventoryItem, Rect2, SRC_TILE_SIZE, TILE_SIZE, Vector2, _, _ref, _ref1;
+
+_ = require('underscore');
 
 _ref = require('./geometry'), Vector2 = _ref.Vector2, Rect2 = _ref.Rect2;
 
-TILE_SIZE = require('./subject').TILE_SIZE;
+_ref1 = require('./subject'), TILE_SIZE = _ref1.TILE_SIZE, SRC_TILE_SIZE = _ref1.SRC_TILE_SIZE;
 
 InventoryItem = (function() {
   function InventoryItem(tileSubject, id, label) {
@@ -23990,28 +24037,6 @@ InventoryItem = (function() {
     this.id = id;
     this.label = label;
   }
-
-  InventoryItem.prototype.getComponent = function(style) {
-    var backgroundSize, offset, scale;
-    if (style == null) {
-      style = {};
-    }
-    scale = TILE_SIZE.pairDivide(SRC_TILE_SIZE);
-    backgroundSize = new Vector2(this.tileSubject.sourceImage.width, this.tileSubject.sourceImage.height).pairMultiply(scale);
-    offset = new Vector2(-this.tileSubject.sourceCoordinates.x * SRC_TILE_SIZE.x, -this.tileSubject.sourceCoordinates.y * SRC_TILE_SIZE.y);
-    return React.DOM.div({
-      "className": "pixel-art-sprite",
-      "style": _.extend({
-        width: TILE_SIZE.x,
-        height: TILE_SIZE.y,
-        position: 'relative',
-        overflow: 'hidden',
-        backgroundImage: "url(" + this.tileSubject.sourceImage.src + ")",
-        backgroundPosition: "" + offset.x + "px " + offset.y + "px",
-        backgroundSize: "" + backgroundSize.x + "px " + backgroundSize.y + "px"
-      }, style)
-    });
-  };
 
   return InventoryItem;
 
@@ -24023,7 +24048,7 @@ module.exports = {
 
 
 
-},{"./geometry":157,"./subject":170}],161:[function(require,module,exports){
+},{"./geometry":157,"./subject":170,"underscore":153}],161:[function(require,module,exports){
 var x, _,
   __slice = [].slice;
 
@@ -24134,16 +24159,26 @@ keyboard = (function() {
   pressedKeys = {};
   $document = $(document);
   downs = $document.asEventStream('keydown').map(function(e) {
-    return keyCodeToName[e.keyCode];
+    return {
+      event: e,
+      name: keyCodeToName[e.keyCode]
+    };
   });
   ups = $document.asEventStream('keyup').map(function(e) {
-    return keyCodeToName[e.keyCode];
+    return {
+      event: e,
+      name: keyCodeToName[e.keyCode]
+    };
   });
-  downs.onValue(function(k) {
-    return pressedKeys[k] = true;
+  downs.onValue(function(_arg) {
+    var name;
+    name = _arg.name;
+    return pressedKeys[name] = true;
   });
-  ups.onValue(function(k) {
-    return pressedKeys[k] = false;
+  ups.onValue(function(_arg) {
+    var name;
+    name = _arg.name;
+    return pressedKeys[name] = false;
   });
   return {
     getIsKeyDown: function(k) {
@@ -24152,15 +24187,19 @@ keyboard = (function() {
     downs: function() {
       var keys;
       keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      return downs.filter(function(k) {
-        return __indexOf.call(keys, k) >= 0;
+      return downs.filter(function(_arg) {
+        var name;
+        name = _arg.name;
+        return __indexOf.call(keys, name) >= 0;
       });
     },
     ups: function() {
       var keys;
       keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      return ups.filter(function(k) {
-        return __indexOf.call(keys, k) >= 0;
+      return ups.filter(function(_arg) {
+        var name;
+        name = _arg.name;
+        return __indexOf.call(keys, name) >= 0;
       });
     }
   };
@@ -24245,7 +24284,28 @@ Level = (function(_super) {
     playerSubject = new TwoFrameSubject(this.imageStore, 'Player', 1, 500);
     this.player = new Actor(playerSubject, [new KeyboardControlledTileMovementBehavior(this.logicalMap, this.logicalMap.getPlayerStartingPosition())]);
     this.actors.push(this.player);
+    keyboard.downs('space').onValue((function(_this) {
+      return function(_arg) {
+        var event, item;
+        event = _arg.event;
+        event.preventDefault();
+        item = _this.inventoryMap.getItem(_this.player.tilePosition);
+        if (item) {
+          _this.inventoryMap.removeItem(_this.player.tilePosition);
+          _this.sceneManager.getState().inventory.push(item);
+          return _this.sceneManager.notifyState();
+        }
+      };
+    })(this));
     return this.lastTime = Date.now();
+  };
+
+  Level.prototype.onMessage = function(message) {
+    if (message.type === 'dropItem' && !this.inventoryMap.getItem(this.player.tilePosition)) {
+      this.inventoryMap.putItem(this.player.tilePosition, message.item);
+      this.sceneManager.getState().inventory = _.without(this.sceneManager.getState().inventory, message.item);
+      return this.sceneManager.notifyState();
+    }
   };
 
   Level.prototype.update = function() {
@@ -24307,6 +24367,9 @@ initInteractive = function(imageStore) {
       }
       currentScene = newScene;
       return currentScene.init(sceneManager);
+    },
+    sendMessage: function(message) {
+      return currentScene != null ? currentScene.onMessage(message) : void 0;
     }
   };
   sceneManager.setScene(scenes["1"]);
@@ -24331,7 +24394,8 @@ initInteractive = function(imageStore) {
       };
       return requestAnimationFrame(_run);
     },
-    state: stateUpdates.toProperty(state)
+    state: stateUpdates.toProperty(state),
+    sceneManager: sceneManager
   };
 };
 
@@ -24599,7 +24663,6 @@ InventoryMap = (function(_super) {
     this.inventoryImage = inventoryImage;
     InventoryMap.__super__.constructor.apply(this, args);
     positions = _.first(_.shuffle(validPositions), 20);
-    console.log('boots at', positions);
     this.data = _.map(this.mapData.layers[0], (function(_this) {
       return function(row, rowIndex) {
         return _.map(row, function(value, col) {
@@ -24614,6 +24677,18 @@ InventoryMap = (function(_super) {
       };
     })(this));
   }
+
+  InventoryMap.prototype.getItem = function(position) {
+    return this.data[position.y][position.x];
+  };
+
+  InventoryMap.prototype.removeItem = function(position) {
+    return this.data[position.y][position.x] = null;
+  };
+
+  InventoryMap.prototype.putItem = function(position, item) {
+    return this.data[position.y][position.x] = item;
+  };
 
   InventoryMap.prototype.render = function(ctx, worldRect) {
     var endX, endY, position, startX, startY, worldRectMax, worldRectMin, x, y, _i, _j;
