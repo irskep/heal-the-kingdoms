@@ -23560,6 +23560,9 @@ Actor = (function() {
   };
 
   Actor.prototype.update = function(dt) {
+    if (this.deathTime) {
+      return;
+    }
     return _.each(this.behaviors, (function(_this) {
       return function(b) {
         return b.update(dt);
@@ -23568,7 +23571,16 @@ Actor = (function() {
   };
 
   Actor.prototype.render = function(ctx) {
-    return this.subject.render(ctx, this.worldPosition);
+    var timeSinceDeath;
+    if (this.deathTime) {
+      ctx.save();
+      timeSinceDeath = Math.min(Date.now() - this.deathTime, 2000);
+      ctx.globalAlpha = 1 - (timeSinceDeath / 2000);
+    }
+    this.subject.render(ctx, this.worldPosition);
+    if (this.deathTime) {
+      return ctx.restore();
+    }
   };
 
   return Actor;
@@ -24365,8 +24377,9 @@ TitleScreen = (function() {
 })();
 
 Retry = (function() {
-  function Retry(next) {
+  function Retry(next, text) {
     this.next = next;
+    this.text = text;
   }
 
   Retry.prototype.init = function(sceneManager) {
@@ -24390,7 +24403,7 @@ Retry = (function() {
     ctx.font = '64pt Niconne';
     ctx.textAlign = 'center';
     ctx.fillStyle = color.yellow;
-    ctx.fillText("You were killed.", canvasSize.x / 2, canvasSize.y / 3);
+    ctx.fillText(this.text, canvasSize.x / 2, canvasSize.y / 3);
     ctx.font = '48pt Niconne';
     ctx.fillText("Press " + window.keyboardSettings.playerAction + " to try again.", canvasSize.x / 2, canvasSize.y / 1.6);
     return ctx.restore();
@@ -24475,14 +24488,21 @@ Level = (function(_super) {
     this.inventoryMap = new InventoryMap(this.imageStore.images['DawnLike_3/Items/Boot'], validPositions, this.logicalData);
     kill = (function(_this) {
       return function(target) {
-        var _base, _base1;
-        _this.npcs = _.without(_this.npcs, target);
-        _this.actors = _.without(_this.actors, target);
-        if (target === _this.player) {
-          return typeof (_base = _this.scripts).onPlayerDeath === "function" ? _base.onPlayerDeath(target) : void 0;
-        } else {
-          return typeof (_base1 = _this.scripts).onNPCDeath === "function" ? _base1.onNPCDeath(target) : void 0;
+        var callback;
+        if (target.deathTime) {
+          return;
         }
+        target.deathTime = Date.now();
+        soundManager.play('crash');
+        callback = function() {
+          var _base, _base1;
+          if (target === _this.player) {
+            return typeof (_base = _this.scripts).onPlayerDeath === "function" ? _base.onPlayerDeath(target) : void 0;
+          } else {
+            return typeof (_base1 = _this.scripts).onNPCDeath === "function" ? _base1.onNPCDeath(target) : void 0;
+          }
+        };
+        return setTimeout(callback, 2000);
       };
     })(this);
     this.npcs = [];
@@ -24515,9 +24535,10 @@ Level = (function(_super) {
     this.teardowns.push(stabs.onValue((function(_this) {
       return function(stab) {
         var stabTarget, stabTargetPosition;
+        soundManager.play('stab');
         stabTargetPosition = _this.player.tilePosition.add(stab);
         stabTarget = _.find(_this.npcs, function(npc) {
-          return npc.tilePosition.isEqual(stabTargetPosition);
+          return npc.tilePosition.isEqual(_this.player.tilePosition) || npc.tilePosition.isEqual(stabTargetPosition);
         });
         if (stabTarget) {
           return kill(stabTarget);
@@ -24531,6 +24552,7 @@ Level = (function(_super) {
         event.preventDefault();
         item = _this.inventoryMap.getItem(_this.player.tilePosition);
         if (item) {
+          soundManager.play('pickup');
           _this.inventoryMap.removeItem(_this.player.tilePosition);
           _this.sceneManager.getState().inventory.push(item);
           return _this.sceneManager.notifyState();
@@ -24555,6 +24577,7 @@ Level = (function(_super) {
 
   Level.prototype.onMessage = function(message) {
     if (message.type === 'dropItem' && !this.inventoryMap.getItem(this.player.tilePosition)) {
+      soundManager.play('putdown');
       this.inventoryMap.putItem(this.player.tilePosition, message.item);
       this.sceneManager.getState().inventory = _.without(this.sceneManager.getState().inventory, message.item);
       return this.sceneManager.notifyState();
@@ -24601,6 +24624,21 @@ Level = (function(_super) {
 })(Scene);
 
 initImages = function() {
+  soundManager.setup({
+    url: '/swf/',
+    preferFlash: false,
+    debugMode: false,
+    onready: function() {
+      return _.each(['pickup', 'putdown', 'stab', 'crash'], function(name) {
+        return soundManager.createSound({
+          id: name,
+          url: "audio/" + name + ".wav",
+          multiShot: true,
+          autoLoad: true
+        });
+      });
+    }
+  });
   return new ImageStore();
 };
 
@@ -24609,7 +24647,7 @@ initInteractive = function(imageStore) {
   currentScene = null;
   scenes = {
     "0-preamble": new Preamble({
-      text: "You are about to begin the test level.",
+      text: "You are about to begin the test level. Allow the dude to touch you.",
       nextScene: "0-level"
     }),
     "0-level": new Level({
@@ -24618,22 +24656,29 @@ initInteractive = function(imageStore) {
       drawData: require('./maps/test'),
       scripts: {
         onPlayerDeath: function() {
-          return sceneManager.setScene(new Retry('0-level'));
+          return sceneManager.setScene(scenes['1-preamble']);
         },
         onNPCDeath: function(stabTarget) {
-          return console.log("You killed", stabTarget);
+          return sceneManager.setScene(new Retry('0-level', "You killed him."));
         }
       }
     }),
     "1-preamble": new Preamble({
-      text: "You are about to begin level 1.",
+      text: "You are about to begin level 1. Kill the dude by stabbing him with “" + window.keyboardSettings.playerStabLeft + "” and “" + window.keyboardSettings.playerStabRight + "”.",
       nextScene: "1-level"
     }),
     "1-level": new Level({
       imageStore: imageStore,
       logicalData: require('./maps/1_cave_logical'),
       drawData: require('./maps/1_cave'),
-      scripts: {}
+      scripts: {
+        onPlayerDeath: function() {
+          return sceneManager.setScene(new Retry('1-level', "You have died."));
+        },
+        onNPCDeath: function(stabTarget) {
+          return sceneManager.setScene(new TitleScreen());
+        }
+      }
     })
   };
   state = {
