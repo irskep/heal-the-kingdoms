@@ -42,6 +42,7 @@ class TileMovementBehavior
 
   setTilePosition: (newTilePosition) ->
     @tilePosition = newTilePosition
+    @actor.tilePosition = @tilePosition
     @targetWorldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
 
   update: (dt) ->

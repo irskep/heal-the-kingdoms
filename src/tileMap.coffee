@@ -70,7 +70,6 @@ class InventoryMap extends TileMap
   constructor: (@inventoryImage, validPositions, args...) ->
     super(args...)
     positions = _.first(_.shuffle(validPositions), 20)
-    console.log 'boots at', positions
     @data = _.map @mapData.layers[0], (row, rowIndex) =>
       _.map row, (value, col) =>
         # TODO: read from actual map instead of ignoring value
@@ -79,6 +78,10 @@ class InventoryMap extends TileMap
             new TileSubject(@inventoryImage, _.random(10)), value, '?')
         else
           null
+
+  getItem: (position) -> @data[position.y][position.x]
+  removeItem: (position) -> @data[position.y][position.x] = null
+  putItem: (position, item) -> @data[position.y][position.x] = item
 
   render: (ctx, worldRect) ->
     worldRectMin = TileMap.worldCoordsToTileCoords(worldRect.getMin(), 'floor')

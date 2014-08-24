@@ -8,16 +8,16 @@ keyboard = do ->
   $document = $(document)
 
   downs = $document.asEventStream('keydown').map (e) ->
-    keyCodeToName[e.keyCode]
+    {event: e, name: keyCodeToName[e.keyCode]}
   ups = $document.asEventStream('keyup').map (e) ->
-    keyCodeToName[e.keyCode]
+    {event: e, name: keyCodeToName[e.keyCode]}
 
-  downs.onValue (k) -> pressedKeys[k] = true
-  ups.onValue (k) -> pressedKeys[k] = false
+  downs.onValue ({name}) -> pressedKeys[name] = true
+  ups.onValue ({name}) -> pressedKeys[name] = false
 
   getIsKeyDown: (k) -> !!pressedKeys[k]
-  downs: (keys...) -> downs.filter (k) -> k in keys
-  ups: (keys...) -> ups.filter (k) -> k in keys
+  downs: (keys...) -> downs.filter ({name}) -> name in keys
+  ups: (keys...) -> ups.filter ({name}) -> name in keys
 
 
 module.exports = keyboard

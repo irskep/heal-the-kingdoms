@@ -54,7 +54,23 @@ class Level extends Scene
     ])
     @actors.push @player
 
+    keyboard.downs('space').onValue ({event}) =>
+      event.preventDefault()
+      item = @inventoryMap.getItem(@player.tilePosition)
+      if item
+        @inventoryMap.removeItem(@player.tilePosition)
+        @sceneManager.getState().inventory.push(item)
+        @sceneManager.notifyState()
+
     @lastTime = Date.now()
+
+  onMessage: (message) ->
+    if (message.type == 'dropItem' and
+        not @inventoryMap.getItem(@player.tilePosition))
+      @inventoryMap.putItem(@player.tilePosition, message.item)
+      @sceneManager.getState().inventory = _.without(
+        @sceneManager.getState().inventory, message.item)
+      @sceneManager.notifyState()
 
   update: ->
     dt = (Date.now() - @lastTime) / 1000
@@ -102,6 +118,8 @@ initInteractive = (imageStore) ->
       currentScene?.teardown?()
       currentScene = newScene
       currentScene.init(sceneManager)
+    sendMessage: (message) ->
+      currentScene?.onMessage(message)
 
   sceneManager.setScene(scenes["1"])
 
@@ -117,6 +135,7 @@ initInteractive = (imageStore) ->
       requestAnimationFrame(_run)
     requestAnimationFrame(_run)
   state: stateUpdates.toProperty(state)
+  sceneManager: sceneManager
 
 
 module.exports = {initImages, initInteractive}
