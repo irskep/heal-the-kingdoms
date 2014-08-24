@@ -7,6 +7,12 @@ logic = require './logic'
 model = require './model'
 color = require './color'
 
+window.keyboardSettings =
+  playerLeft: 'a'
+  playerRight: 'd'
+  playerUp: 'w'
+  playerDown: 's'
+
 $ ->
   React.renderComponent(
     <HTKRoot />,

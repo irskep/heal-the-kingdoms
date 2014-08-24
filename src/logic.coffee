@@ -78,7 +78,7 @@ class LogicalTileMap extends TileMap
       @data[position.y][position.x]
     else
       null
-  getIsWalkable: (position) -> @getValue(position) == 1
+  getIsWalkable: (position) -> @getValue(position) in [1, 3]
 
 
 approach = (currentPosition, targetPosition, maxMove) ->
@@ -111,7 +111,6 @@ class TileMovementBehavior
   init: (@actor) ->
     @actor.worldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
     @targetWorldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
-    console.log 'boom'
     @decide()
 
   setTilePosition: (newTilePosition) ->
@@ -130,6 +129,30 @@ class TileMovementBehavior
   getShouldDecide: -> @actor.worldPosition.isEqual(@targetWorldPosition)
 
   decide: -> throw "not implemented"
+
+
+class KeyboardControlledTileMovementBehavior extends TileMovementBehavior
+  constructor: (@logicalMap, @tilePosition, @speed=4) ->
+    super(@tilePosition, @speed)
+
+  decide: ->
+    change = new Vector2(0, 0)
+    w = (x, y) =>
+      @logicalMap.getIsWalkable(@tilePosition.add(new Vector2(x, y)))
+    if (keyboard.getIsKeyDown(window.keyboardSettings.playerLeft) and w(-1, 0))
+      change.x -= 1
+    if (keyboard.getIsKeyDown(window.keyboardSettings.playerRight) and w(1, 0))
+      change.x += 1
+    if (keyboard.getIsKeyDown(window.keyboardSettings.playerUp) and w(0, -1))
+      change.y -= 1
+    if (keyboard.getIsKeyDown(window.keyboardSettings.playerDown) and w(0, 1))
+      change.y += 1
+
+    # can cheat with diagonals unless we check for it
+    if change.x and change.y and !w(change.x, change.y)
+      change.x = 0
+      change.y = 0
+    @setTilePosition @tilePosition.add(change)
 
 
 class RandomWalkTileMovementBehavior extends TileMovementBehavior
@@ -167,6 +190,13 @@ init = (canvas) ->
       imageStore, 'Player', new Vector2(0, 0), 500)
     actors.push new Actor(npcSubject, [
       new RandomWalkTileMovementBehavior(logicalMap, new Vector2(5, 5)),
+    ])
+
+    playerSubject = new TwoFrameSubject(
+      imageStore, 'Player', new Vector2(1, 0), 500)
+    actors.push new Actor(playerSubject, [
+      new KeyboardControlledTileMovementBehavior(
+        logicalMap, new Vector2(10, 10)),
     ])
 
     ctx = canvas.getContext('2d')
