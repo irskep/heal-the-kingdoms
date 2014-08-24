@@ -117,12 +117,14 @@ class Level extends Scene
       @logicalData)
 
     kill = (target) =>
-      @npcs = _.without @npcs, target
-      @actors = _.without @actors, target
-      if target == @player
-        @scripts.onPlayerDeath?(target)
-      else
-        @scripts.onNPCDeath?(target)
+      return if target.deathTime
+      target.deathTime = Date.now()
+      callback = =>
+        if target == @player
+          @scripts.onPlayerDeath?(target)
+        else
+          @scripts.onNPCDeath?(target)
+      setTimeout(callback, 2000)
 
     @npcs = []
     npcSubject = new TwoFrameSubject(@imageStore, 'Player', 0, 500)
@@ -152,8 +154,9 @@ class Level extends Scene
     )
     @teardowns.push(stabs.onValue (stab) =>
       stabTargetPosition = @player.tilePosition.add(stab)
-      stabTarget = _.find @npcs, (npc) ->
-        npc.tilePosition.isEqual(stabTargetPosition)
+      stabTarget = _.find @npcs, (npc) =>
+        (npc.tilePosition.isEqual(@player.tilePosition) or
+          npc.tilePosition.isEqual(stabTargetPosition))
       if stabTarget
         kill(stabTarget)
     )

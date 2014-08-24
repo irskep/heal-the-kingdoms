@@ -28,9 +28,16 @@ class Actor
   getCenter: -> @worldPosition.add(TILE_SIZE.multiply(0.5))
 
   update: (dt) ->
+    return if @deathTime
     _.each @behaviors, (b) => b.update(dt)
 
-  render: (ctx) -> @subject.render(ctx, @worldPosition)
+  render: (ctx) ->
+    if @deathTime
+      ctx.save()
+      timeSinceDeath = Math.min(Date.now() - @deathTime, 2000)
+      ctx.globalAlpha = 1 - (timeSinceDeath / 2000)
+    @subject.render(ctx, @worldPosition)
+    ctx.restore() if @deathTime
 
 
 class TileMovementBehavior
