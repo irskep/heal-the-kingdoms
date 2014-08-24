@@ -23612,6 +23612,13 @@ model = require('./model');
 
 color = require('./color');
 
+window.keyboardSettings = {
+  playerLeft: 'a',
+  playerRight: 'd',
+  playerUp: 'w',
+  playerDown: 's'
+};
+
 $(function() {
   return React.renderComponent(HTKRoot(null), $('#htk-root').get(0));
 });
@@ -23808,7 +23815,7 @@ module.exports = keyboard;
 
 
 },{"./keyCodeToName":158,"baconjs":2}],160:[function(require,module,exports){
-var Actor, DrawableTileMap, ImageStore, LogicalTileMap, RandomWalkTileMovementBehavior, Rect2, SRC_TILE_SIZE, TILE_SIZE, TileMap, TileMovementBehavior, TwoFrameSubject, Vector2, approach, drawTile, init, keyboard, store, testMapDrawData, testMapLogicalData, _, _ref,
+var Actor, DrawableTileMap, ImageStore, KeyboardControlledTileMovementBehavior, LogicalTileMap, RandomWalkTileMovementBehavior, Rect2, SRC_TILE_SIZE, TILE_SIZE, TileMap, TileMovementBehavior, TwoFrameSubject, Vector2, approach, drawTile, init, keyboard, store, testMapDrawData, testMapLogicalData, _, _ref,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __slice = [].slice;
@@ -23937,7 +23944,8 @@ LogicalTileMap = (function(_super) {
   };
 
   LogicalTileMap.prototype.getIsWalkable = function(position) {
-    return this.getValue(position) === 1;
+    var _ref1;
+    return (_ref1 = this.getValue(position)) === 1 || _ref1 === 3;
   };
 
   return LogicalTileMap;
@@ -24000,7 +24008,6 @@ TileMovementBehavior = (function() {
     this.actor = actor;
     this.actor.worldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
     this.targetWorldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
-    console.log('boom');
     return this.decide();
   };
 
@@ -24031,6 +24038,47 @@ TileMovementBehavior = (function() {
   return TileMovementBehavior;
 
 })();
+
+KeyboardControlledTileMovementBehavior = (function(_super) {
+  __extends(KeyboardControlledTileMovementBehavior, _super);
+
+  function KeyboardControlledTileMovementBehavior(logicalMap, tilePosition, speed) {
+    this.logicalMap = logicalMap;
+    this.tilePosition = tilePosition;
+    this.speed = speed != null ? speed : 4;
+    KeyboardControlledTileMovementBehavior.__super__.constructor.call(this, this.tilePosition, this.speed);
+  }
+
+  KeyboardControlledTileMovementBehavior.prototype.decide = function() {
+    var change, w;
+    change = new Vector2(0, 0);
+    w = (function(_this) {
+      return function(x, y) {
+        return _this.logicalMap.getIsWalkable(_this.tilePosition.add(new Vector2(x, y)));
+      };
+    })(this);
+    if (keyboard.getIsKeyDown(window.keyboardSettings.playerLeft) && w(-1, 0)) {
+      change.x -= 1;
+    }
+    if (keyboard.getIsKeyDown(window.keyboardSettings.playerRight) && w(1, 0)) {
+      change.x += 1;
+    }
+    if (keyboard.getIsKeyDown(window.keyboardSettings.playerUp) && w(0, -1)) {
+      change.y -= 1;
+    }
+    if (keyboard.getIsKeyDown(window.keyboardSettings.playerDown) && w(0, 1)) {
+      change.y += 1;
+    }
+    if (change.x && change.y && !w(change.x, change.y)) {
+      change.x = 0;
+      change.y = 0;
+    }
+    return this.setTilePosition(this.tilePosition.add(change));
+  };
+
+  return KeyboardControlledTileMovementBehavior;
+
+})(TileMovementBehavior);
 
 RandomWalkTileMovementBehavior = (function(_super) {
   __extends(RandomWalkTileMovementBehavior, _super);
@@ -24068,12 +24116,14 @@ RandomWalkTileMovementBehavior = (function(_super) {
 init = function(canvas) {
   var imageStore;
   return imageStore = new ImageStore(function() {
-    var actors, ctx, drawableMap, lastTime, logicalMap, npcSubject, render, run, update;
+    var actors, ctx, drawableMap, lastTime, logicalMap, npcSubject, playerSubject, render, run, update;
     drawableMap = new DrawableTileMap(imageStore.images['tiles'], testMapDrawData);
     logicalMap = new LogicalTileMap(testMapLogicalData);
     actors = [];
     npcSubject = new TwoFrameSubject(imageStore, 'Player', new Vector2(0, 0), 500);
     actors.push(new Actor(npcSubject, [new RandomWalkTileMovementBehavior(logicalMap, new Vector2(5, 5))]));
+    playerSubject = new TwoFrameSubject(imageStore, 'Player', new Vector2(1, 0), 500);
+    actors.push(new Actor(playerSubject, [new KeyboardControlledTileMovementBehavior(logicalMap, new Vector2(10, 10))]));
     ctx = canvas.getContext('2d');
     update = function(dt) {
       return _.each(actors, function(a) {
