@@ -44,7 +44,7 @@ class TitleScreen
 
 
 class Retry
-  constructor: (@next) ->
+  constructor: (@next, @text) ->
   init: (@sceneManager) ->
     keyboard.downs(window.keyboardSettings.playerAction).take(1)
       .onValue ({event}) =>
@@ -58,7 +58,7 @@ class Retry
     ctx.font = '64pt Niconne'
     ctx.textAlign = 'center'
     ctx.fillStyle = color.yellow
-    ctx.fillText "You were killed.", canvasSize.x / 2, canvasSize.y / 3
+    ctx.fillText @text, canvasSize.x / 2, canvasSize.y / 3
 
     ctx.font = '48pt Niconne'
     ctx.fillText("Press #{window.keyboardSettings.playerAction} to try again.",
@@ -234,7 +234,8 @@ initInteractive = (imageStore) ->
 
   scenes = {
     "0-preamble": new Preamble({
-      text: "You are about to begin the test level."
+      text: "
+        You are about to begin the test level. Allow the dude to touch you."
       nextScene: "0-level"
     }),
     "0-level": new Level({
@@ -242,18 +243,26 @@ initInteractive = (imageStore) ->
       logicalData: require('./maps/test_logical'),
       drawData: require('./maps/test'),
       scripts: {
-        onPlayerDeath: -> sceneManager.setScene(new Retry('0-level'))
-        onNPCDeath: (stabTarget) -> console.log "You killed", stabTarget
+        onPlayerDeath: -> sceneManager.setScene(scenes['1-preamble'])
+        onNPCDeath: (stabTarget) ->
+          sceneManager.setScene(new Retry('0-level', "You killed him."))
       }}),
     "1-preamble": new Preamble({
-      text: "You are about to begin level 1."
+      text: "
+        You are about to begin level 1. Kill the dude by stabbing him with
+        “#{window.keyboardSettings.playerStabLeft}” and
+        “#{window.keyboardSettings.playerStabRight}”."
       nextScene: "1-level"
     }),
     "1-level": new Level({
       imageStore,
       logicalData: require('./maps/1_cave_logical'),
       drawData: require('./maps/1_cave'),
-      scripts: {}}),
+      scripts: {
+        onPlayerDeath: ->
+          sceneManager.setScene(new Retry('1-level', "You have died."))
+        onNPCDeath: (stabTarget) -> sceneManager.setScene(new TitleScreen())
+      }}),
   }
 
   state = {inventory: [], text: null}
