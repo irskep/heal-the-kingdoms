@@ -23932,7 +23932,7 @@ GameView = React.createClass({
   },
   render: function() {
     if (this.state.isLoaded && this.state.gameState) {
-      return React.DOM.div(null, React.DOM.p(null, "Move with WASD. Switch levels with the number keys."), Inventory({
+      return React.DOM.div(null, React.DOM.p(null, "Move with WASD. Drop items by clicking on them in the inventory bar.\n\nSwitch levels with the number keys. "), Inventory({
         "items": this.state.gameState.inventory,
         "sceneManager": this.state.sceneManager
       }), WorldView({
@@ -23951,9 +23951,9 @@ Inventory = React.createClass({
     return React.DOM.div({
       "style": {
         width: WIDTH,
-        height: 32,
-        backgroundColor: color.brown
-      }
+        height: 32
+      },
+      "className": "inventory"
     }, _.map(this.props.items, (function(_this) {
       return function(item) {
         return InventoryItem({
