@@ -26,9 +26,6 @@ HTKRoot = React.createClass
   displayName: 'HTKRoot'
   render: ->
     <div>
-      <h1 style={{marginTop: 0}} className="title">
-        Heal the Kingdoms
-      </h1>
       <GameView />
     </div>
 

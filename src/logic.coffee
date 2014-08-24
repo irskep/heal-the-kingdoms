@@ -22,8 +22,49 @@ class Scene
   render: (ctx) -> throw "Not implemented"
 
 
+class TitleScreen
+  constructor: ->
+  init: (@sceneManager) ->
+    keyboard.downs('space').take(1).onValue ({event}) =>
+      event.preventDefault()
+      @sceneManager.setScene @sceneManager.scenes["0-preamble"]
+  update: ->
+  render: (ctx, canvasSize) ->
+    ctx.save()
+    ctx.fillStyle = color.black
+    ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+    ctx.font = '64pt Niconne'
+    ctx.textAlign = 'center'
+    ctx.fillStyle = color.yellow
+    ctx.fillText "Heal the Kingdoms", canvasSize.x / 2, canvasSize.y / 3
+
+    ctx.font = '48pt Niconne'
+    ctx.fillText "Press Space to begin.", canvasSize.x / 2, canvasSize.y / 1.6
+    ctx.restore()
+
+
+class Preamble
+  constructor: ({@text, @nextScene}) ->
+  init: (@sceneManager) ->
+    keyboard.downs('space').take(1).onValue =>
+      @sceneManager.setScene @sceneManager.scenes[@nextScene]
+  update: ->
+  render: (ctx, canvasSize) ->
+    ctx.save()
+    ctx.fillStyle = color.black
+    ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+
+    ctx.font = '24pt Niconne'
+    ctx.textAlign = 'left'
+    ctx.fillStyle = color.yellow
+    ctx.fillText @text, 20, 30, canvasSize.x - 40
+
+    ctx.fillText "Press space to continue.", 20, canvasSize.y - 10
+    ctx.restore()
+
+
 class Level extends Scene
-  constructor: (@imageStore, @logicalData, @drawData, @scripts) ->
+  constructor: ({@imageStore, @logicalData, @drawData, @scripts}) ->
     @drawableMap = new DrawableTileMap(
       @imageStore.images['tiles'], @drawData)
     @logicalMap = new LogicalTileMap(@logicalData)
@@ -120,11 +161,24 @@ initInteractive = (imageStore) ->
   currentScene = null
 
   scenes = {
-    "1": new Level(
-      imageStore, require('./maps/1_cave_logical'), require('./maps/1_cave'),
-      {}),
-    "0": new Level(
-      imageStore, require('./maps/test_logical'), require('./maps/test'), {}),
+    "0-preamble": new Preamble({
+      text: "You are about to begin the test level."
+      nextScene: "0-level"
+    }),
+    "0-level": new Level({
+      imageStore,
+      logicalData: require('./maps/test_logical'),
+      drawData: require('./maps/test'),
+      scripts: {}}),
+    "1-preamble": new Preamble({
+      text: "You are about to begin level 1."
+      nextScene: "1-level"
+    }),
+    "1-level": new Level({
+      imageStore,
+      logicalData: require('./maps/1_cave_logical'),
+      drawData: require('./maps/1_cave'),
+      scripts: {}}),
   }
 
   state = {inventory: [], text: null}
@@ -141,10 +195,7 @@ initInteractive = (imageStore) ->
     sendMessage: (message) ->
       currentScene?.onMessage(message)
 
-  sceneManager.setScene(scenes["1"])
-
-  _.each scenes, (scene, key) ->
-    keyboard.downs(key).onValue -> sceneManager.setScene(scene)
+  sceneManager.setScene(new TitleScreen())
 
   run: (canvas) ->
     canvasSize = new Vector2(canvas.width, canvas.height)

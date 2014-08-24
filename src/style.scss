@@ -2,8 +2,8 @@
 
 body {
   padding: 10px;
-  background-color: $lightgreen;
-  color: $black;
+  background-color: $black;
+  color: $yellow;
 }
 
 @mixin gradient-vertical($topColor, $bottomColor) {
