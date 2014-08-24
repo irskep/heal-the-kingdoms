@@ -28,6 +28,15 @@ class Level extends Scene
       @imageStore.images['tiles'], @drawData)
     @logicalMap = new LogicalTileMap(@logicalData)
 
+    @textMap = do ->
+      data = {
+       0: {0: "YAY TEXT!"},
+       3: {24: "Far across the land, blah blah blabbety blah."}
+      }
+      getText: (position) -> data[position.y]?[position.x]
+
+    @teardowns = []
+
   init: (@sceneManager) ->
     @actors = []
 
@@ -54,15 +63,26 @@ class Level extends Scene
     ])
     @actors.push @player
 
-    keyboard.downs('space').onValue ({event}) =>
+    @teardowns.push(keyboard.downs('space').onValue ({event}) =>
       event.preventDefault()
       item = @inventoryMap.getItem(@player.tilePosition)
       if item
         @inventoryMap.removeItem(@player.tilePosition)
         @sceneManager.getState().inventory.push(item)
         @sceneManager.notifyState()
+    )
+
+    @teardowns.push(@player.tilePositionUpdates.skipDuplicates(_.isEqual)
+      .onValue (position) =>
+        @sceneManager.getState().text = @textMap.getText(position)
+        @sceneManager.notifyState()
+    )
+    @player.tilePositionUpdates.push(@player.tilePosition)
 
     @lastTime = Date.now()
+
+  teardown: ->
+    _.each @teardowns, (t) -> t()
 
   onMessage: (message) ->
     if (message.type == 'dropItem' and
@@ -107,7 +127,7 @@ initInteractive = (imageStore) ->
       imageStore, require('./maps/test_logical'), require('./maps/test'), {}),
   }
 
-  state = {inventory: []}
+  state = {inventory: [], text: null}
   stateUpdates = new Bacon.Bus()
 
   sceneManager =

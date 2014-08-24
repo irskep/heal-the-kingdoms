@@ -1,3 +1,4 @@
+Bacon = require 'baconjs'
 _ = require 'underscore'
 {Vector2, Rect2} = require './geometry'
 color = require './color'
@@ -37,12 +38,14 @@ class TileMovementBehavior
 
   init: (@actor) ->
     @actor.worldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
+    @actor.tilePositionUpdates = new Bacon.Bus()
     @targetWorldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
     @decide()
 
   setTilePosition: (newTilePosition) ->
     @tilePosition = newTilePosition
     @actor.tilePosition = @tilePosition
+    @actor.tilePositionUpdates.push @tilePosition
     @targetWorldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
 
   update: (dt) ->

@@ -30,9 +30,6 @@ HTKRoot = React.createClass
         Heal the Kingdoms
       </h1>
       <GameView />
-      <p>
-        Move with WASD. Switch levels with the number keys.
-      </p>
     </div>
 
 GameView = React.createClass
@@ -52,9 +49,12 @@ GameView = React.createClass
   render: ->
     if @state.isLoaded and @state.gameState
       <div>
-        <WorldView runGame={@state.runGame} />
+        <p>
+          Move with WASD. Switch levels with the number keys.
+        </p>
         <Inventory items={@state.gameState.inventory}
                    sceneManager={@state.sceneManager} />
+        <WorldView runGame={@state.runGame}, gameState={@state.gameState} />
       </div>
     else
       <span>"Still loading..."</span>
@@ -62,7 +62,7 @@ GameView = React.createClass
 Inventory = React.createClass
   displayName: 'Inventory'
   render: ->
-    <div style={{width: WIDTH}}>
+    <div style={{width: WIDTH, height: 32, backgroundColor: color.brown}}>
       {_.map @props.items, (item) =>
         <InventoryItem item={item} style={{float: 'left'}}
         onClick={=> @props.sceneManager.sendMessage({type: 'dropItem', item})}
@@ -95,14 +95,20 @@ InventoryItem = React.createClass
 WorldView = React.createClass
   displayName: 'WorldView'
   getDefaultProps: -> {width: WIDTH, height: 576}
-  componentDidMount: -> @props.runGame(@getDOMNode())
+  componentDidMount: ->
+    @props.runGame(@getDOMNode().getElementsByTagName('canvas')[0])
   render: ->
-    <canvas className="game-view"
-        width={@props.width} height={@props.height}
-        style={{
-          width: @props.width, height: @props.height,
-          backgroundColor: 'darkgreen'
-        }}>
-    </canvas>
+    <div style={{position: 'relative', width: @props.width}}>
+      <canvas className="game-view"
+          width={@props.width} height={@props.height}
+          style={{
+            width: @props.width, height: @props.height,
+            backgroundColor: 'darkgreen'
+          }}>
+      </canvas>
+      {@props.gameState.text && <div className="in-game-text">
+        {@props.gameState.text}
+      </div>}
+    </div>
 
 module.exports = {}
