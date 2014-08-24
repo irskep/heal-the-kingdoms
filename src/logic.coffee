@@ -12,27 +12,9 @@ keyboard = require './keyboard'
   Actor, KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior
 } = require './actor'
 
-{DrawableTileMap, LogicalTileMap} = require './tileMap'
+{InventoryItem} = require './inventory'
+{DrawableTileMap, LogicalTileMap, InventoryMap} = require './tileMap'
 
-
-class InventoryItem
-  constructor: (@tileSubject, @id, @label) ->
-  getComponent: (style={}) ->
-    scale = TILE_SIZE.pairDivide(SRC_TILE_SIZE);
-    backgroundSize = new Vector2(
-        @tileSubject.sourceImage.width, @tileSubject.sourceImage.height)
-      .pairMultiply(scale)
-    offset = new Vector2(
-      -@tileSubject.sourceCoordinates.x * SRC_TILE_SIZE.x,
-      -@tileSubject.sourceCoordinates.y * SRC_TILE_SIZE.y,
-    )
-    <div className="pixel-art-sprite" style={_.extend({
-        width: TILE_SIZE.x, height: TILE_SIZE.y, position: 'relative',
-        overflow: 'hidden',
-        backgroundImage: "url(#{@tileSubject.sourceImage.src})",
-        backgroundPosition: "#{offset.x}px #{offset.y}px",
-        backgroundSize: "#{backgroundSize.x}px #{backgroundSize.y}px"
-        }, style)} />
 
 
 class Scene
@@ -55,15 +37,17 @@ class Level extends Scene
         position = new Vector2(x, y)
         validPositions.push(position) if @logicalMap.getIsPath(position)
 
-    npcSubject = new TwoFrameSubject(
-      @imageStore, 'Player', new Vector2(0, 0), 500)
+    @inventoryMap = new InventoryMap(
+      @imageStore.images['DawnLike_3/Items/Boot'], validPositions,
+      @logicalData)
+
+    npcSubject = new TwoFrameSubject(@imageStore, 'Player', 0, 500)
     @actors.push new Actor(npcSubject, [
       new RandomWalkTileMovementBehavior(
         @logicalMap, _.choice(validPositions)),
     ])
 
-    playerSubject = new TwoFrameSubject(
-      @imageStore, 'Player', new Vector2(1, 0), 500)
+    playerSubject = new TwoFrameSubject(@imageStore, 'Player', 1, 500)
     @player = new Actor(playerSubject, [
       new KeyboardControlledTileMovementBehavior(
         @logicalMap, @logicalMap.getPlayerStartingPosition()),
@@ -88,6 +72,7 @@ class Level extends Scene
       -mapCenter.y + canvasSize.y / 2)
 
     @drawableMap.render(ctx, Rect2.fromCenter(mapCenter, canvasSize))
+    @inventoryMap.render(ctx, Rect2.fromCenter(mapCenter, canvasSize))
     _.each @actors, (a) -> a.render(ctx)
     ctx.restore()
 
@@ -106,14 +91,7 @@ initInteractive = (imageStore) ->
       imageStore, require('./maps/test_logical'), require('./maps/test'), {}),
   }
 
-  state = {
-    inventory: [
-      new InventoryItem(
-        new TileSubject(
-          imageStore.images['DawnLike_3/Items/Boot'], new Vector2(0, 0)),
-        0, 'Boot')
-    ]
-  }
+  state = {inventory: []}
   stateUpdates = new Bacon.Bus()
 
   sceneManager =

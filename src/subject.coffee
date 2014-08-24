@@ -20,20 +20,23 @@ drawTile = (sourceImage, sourceCoordinates, ctx, position) ->
 
 
 class TileSubject
-  constructor: (@sourceImage, @sourceCoordinates) ->
+  constructor: (@sourceImage, @sourceIndex) ->
+    imageColumns = @sourceImage.width / SRC_TILE_SIZE.x
+    @sourceCoordinates = new Vector2(
+      @sourceIndex % imageColumns, Math.floor(@sourceIndex / imageColumns))
   render: (ctx, position) ->
     drawTile(@sourceImage, @sourceCoordinates, ctx, position)
 
 
 class TwoFrameSubject
   constructor: (
-      @imageStore, @imageName, @sourceCoordinates, @animationPeriod) ->
+      @imageStore, @imageName, @sourceIndex, @animationPeriod) ->
     @animationOffset = _.random(@animationPeriod - 1)
     @frameTileSubjects = [
       new TileSubject(
-        @imageStore.images[@imageName + '0'], @sourceCoordinates),
+        @imageStore.images[@imageName + '0'], @sourceIndex),
       new TileSubject(
-        @imageStore.images[@imageName + '1'], @sourceCoordinates),
+        @imageStore.images[@imageName + '1'], @sourceIndex),
     ]
 
   render: (ctx, position) ->

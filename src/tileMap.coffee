@@ -1,7 +1,8 @@
 _ = require 'underscore'
 
 {Vector2, Rect2} = require './geometry'
-{TILE_SIZE, drawTile, SRC_TILE_SIZE} = require './subject'
+{TILE_SIZE, drawTile, SRC_TILE_SIZE, TileSubject} = require './subject'
+{InventoryItem} = require './inventory'
 
 
 class TileMap
@@ -65,4 +66,34 @@ class LogicalTileMap extends TileMap
   getIsDoor: (position) -> @getValue(position) == 3
 
 
-module.exports = {TileMap, DrawableTileMap, LogicalTileMap}
+class InventoryMap extends TileMap
+  constructor: (@inventoryImage, validPositions, args...) ->
+    super(args...)
+    positions = _.first(_.shuffle(validPositions), 20)
+    console.log 'boots at', positions
+    @data = _.map @mapData.layers[0], (row, rowIndex) =>
+      _.map row, (value, col) =>
+        # TODO: read from actual map instead of ignoring value
+        if _.find(positions, (pos) -> pos.x == col and pos.y == rowIndex)
+          new InventoryItem(
+            new TileSubject(@inventoryImage, _.random(10)), value, '?')
+        else
+          null
+
+  render: (ctx, worldRect) ->
+    worldRectMin = TileMap.worldCoordsToTileCoords(worldRect.getMin(), 'floor')
+    worldRectMax = TileMap.worldCoordsToTileCoords(worldRect.getMax(), 'ceil')
+    startX = Math.max(0, worldRectMin.x)
+    startY = Math.max(0, worldRectMin.y)
+    endX = Math.min(@size.x, worldRectMax.x)
+    endY = Math.min(@size.y, worldRectMax.y)
+
+    for y in [startY...endY]
+      for x in [startX...endX]
+        if @data[y][x]
+          position = TILE_SIZE.pairMultiply({x, y})
+          @data[y][x].tileSubject.render(ctx, position)
+    null
+
+
+module.exports = {TileMap, DrawableTileMap, LogicalTileMap, InventoryMap}
