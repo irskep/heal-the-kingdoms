@@ -19,56 +19,28 @@ drawTile = (sourceImage, sourceCoordinates, ctx, position) ->
     TILE_SIZE.x, TILE_SIZE.y)
 
 
-class TileType
+class TileSubject
   constructor: (@sourceImage, @sourceCoordinates) ->
   render: (ctx, position) ->
     drawTile(@sourceImage, @sourceCoordinates, ctx, position)
-
-
-PRELOAD = [
-  'Player0'
-  'Player1'
-  'tiles'
-]
-
-getImageUrl = (identifier) -> "img/#{identifier}.png"
-
-
-class ImageStore
-  constructor: ->
-    @images = {}
-    @loadedCount = 0
-    completes = new Bacon.Bus()
-    @isComplete = completes.map(true).toProperty(false)
-
-    _.each PRELOAD, (identifier) =>
-      img = new Image()
-      src = getImageUrl(identifier)
-      @images[identifier] = img
-      img.onload = =>
-        @loadedCount += 1
-        if @loadedCount == _.size @images
-          completes.push()
-      img.src = src
 
 
 class TwoFrameSubject
   constructor: (
       @imageStore, @imageName, @sourceCoordinates, @animationPeriod) ->
     @animationOffset = _.random(@animationPeriod - 1)
-    @frameTileTypes = [
-      new TileType(
+    @frameTileSubjects = [
+      new TileSubject(
         @imageStore.images[@imageName + '0'], @sourceCoordinates),
-      new TileType(
+      new TileSubject(
         @imageStore.images[@imageName + '1'], @sourceCoordinates),
     ]
 
   render: (ctx, position) ->
     i = Math.floor((Date.now() + @animationOffset) / @animationPeriod)
-    @frameTileTypes[i % @frameTileTypes.length].render(ctx, position)
+    @frameTileSubjects[i % @frameTileSubjects.length].render(ctx, position)
 
 
 module.exports = {
-  TileType, ImageStore, TILE_SIZE, TwoFrameSubject, drawTile, getImageUrl,
-  SRC_TILE_SIZE
+  TileSubject, TILE_SIZE, TwoFrameSubject, drawTile, SRC_TILE_SIZE
 }

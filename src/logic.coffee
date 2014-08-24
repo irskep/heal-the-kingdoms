@@ -1,15 +1,38 @@
+Bacon = require 'baconjs'
+React = require 'react/addons'
 _ = require 'underscore'
 util = require './util'
 
 {Vector2, Rect2} = require './geometry'
 color = require './color'
 keyboard = require './keyboard'
-{ImageStore, TwoFrameSubject} = require './store'
+{TwoFrameSubject, TileSubject, TILE_SIZE, SRC_TILE_SIZE} = require './subject'
+{ImageStore} = require './imageStore'
 {
   Actor, KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior
 } = require './actor'
 
 {DrawableTileMap, LogicalTileMap} = require './tileMap'
+
+
+class InventoryItem
+  constructor: (@tileSubject, @id, @label) ->
+  getComponent: (style={}) ->
+    scale = TILE_SIZE.pairDivide(SRC_TILE_SIZE);
+    backgroundSize = new Vector2(
+        @tileSubject.sourceImage.width, @tileSubject.sourceImage.height)
+      .pairMultiply(scale)
+    offset = new Vector2(
+      -@tileSubject.sourceCoordinates.x * SRC_TILE_SIZE.x,
+      -@tileSubject.sourceCoordinates.y * SRC_TILE_SIZE.y,
+    )
+    <div className="pixel-art-sprite" style={_.extend({
+        width: TILE_SIZE.x, height: TILE_SIZE.y, position: 'relative',
+        overflow: 'hidden',
+        backgroundImage: "url(#{@tileSubject.sourceImage.src})",
+        backgroundPosition: "#{offset.x}px #{offset.y}px",
+        backgroundSize: "#{backgroundSize.x}px #{backgroundSize.y}px"
+        }, style)} />
 
 
 class Scene
@@ -72,10 +95,7 @@ class Level extends Scene
 initImages = -> new ImageStore()
 
 
-initInteractive = (canvas, imageStore) ->
-  canvasSize = new Vector2(canvas.width, canvas.height)
-  ctx = canvas.getContext('2d')
-
+initInteractive = (imageStore) ->
   currentScene = null
 
   scenes = {
@@ -86,8 +106,20 @@ initInteractive = (canvas, imageStore) ->
       imageStore, require('./maps/test_logical'), require('./maps/test'), {}),
   }
 
+  state = {
+    inventory: [
+      new InventoryItem(
+        new TileSubject(
+          imageStore.images['DawnLike_3/Items/Boot'], new Vector2(0, 0)),
+        0, 'Boot')
+    ]
+  }
+  stateUpdates = new Bacon.Bus()
+
   sceneManager =
     scenes: scenes
+    getState: -> state
+    notifyState: -> stateUpdates.push(state)
     setScene: (newScene) ->
       currentScene?.teardown?()
       currentScene = newScene
@@ -98,11 +130,15 @@ initInteractive = (canvas, imageStore) ->
   _.each scenes, (scene, key) ->
     keyboard.downs(key).onValue -> sceneManager.setScene(scene)
 
-  run = ->
-    currentScene?.update()
-    currentScene?.render(ctx, canvasSize)
-    requestAnimationFrame(run)
-  requestAnimationFrame(run)
+  run: (canvas) ->
+    canvasSize = new Vector2(canvas.width, canvas.height)
+    ctx = canvas.getContext('2d')
+    _run = ->
+      currentScene?.update()
+      currentScene?.render(ctx, canvasSize)
+      requestAnimationFrame(_run)
+    requestAnimationFrame(_run)
+  state: stateUpdates.toProperty(state)
 
 
 module.exports = {initImages, initInteractive}

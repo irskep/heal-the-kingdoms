@@ -1,7 +1,7 @@
 _ = require 'underscore'
 
 {Vector2, Rect2} = require './geometry'
-{TILE_SIZE, drawTile, SRC_TILE_SIZE} = require './store'
+{TILE_SIZE, drawTile, SRC_TILE_SIZE} = require './subject'
 
 
 class TileMap
@@ -23,6 +23,7 @@ class DrawableTileMap extends TileMap
     @layers = _.map @mapData.layers, (layer) ->
       _.map layer, (row) ->
         _.map row, (index) ->
+          return null unless index > 0
           index -= 1
           new Vector2(index % imageColumns, Math.floor(index / imageColumns))
 
@@ -37,8 +38,9 @@ class DrawableTileMap extends TileMap
     for layer in [0...@layers.length]
       for y in [startY...endY]
         for x in [startX...endX]
-          position = TILE_SIZE.pairMultiply({x, y})
-          drawTile(@mapTileImage, @layers[layer][y][x], ctx, position)
+          if @layers[layer][y][x]
+            position = TILE_SIZE.pairMultiply({x, y})
+            drawTile(@mapTileImage, @layers[layer][y][x], ctx, position)
     null
 
 

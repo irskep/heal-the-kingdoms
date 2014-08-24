@@ -13,6 +13,8 @@ window.keyboardSettings =
   playerUp: 'w'
   playerDown: 's'
 
+WIDTH = 768
+
 $ ->
   React.renderComponent(
     <HTKRoot />,
@@ -38,18 +40,34 @@ GameView = React.createClass
     imageStore = logic.initImages()
     @setState {imageStore}
     imageStore.isComplete.filter(_.identity).onValue =>
-      @setState {isLoaded: true}
+      {run, state} = logic.initInteractive(imageStore)
+      @setState
+        isLoaded: true
+        runGame: run
+      state.onValue (newState) =>
+        @setState {gameState: newState}
   render: ->
-    <div>
-      {!@state.isLoaded and "Still loading..."}
-      {@state.isLoaded && <WorldView imageStore={@state.imageStore} />}
+    if @state.isLoaded and @state.gameState
+      <div>
+        <WorldView runGame={@state.runGame} />
+        <Inventory items={@state.gameState.inventory} />
+      </div>
+    else
+      <span>"Still loading..."</span>
+
+Inventory = React.createClass
+  displayName: 'Inventory'
+  render: ->
+    <div style={{width: WIDTH}}>
+      {_.map @props.items, (item) =>
+        item.getComponent()
+      }
     </div>
 
 WorldView = React.createClass
   displayName: 'WorldView'
-  getDefaultProps: -> {width: 768, height: 576}
-  componentDidMount: ->
-    logic.initInteractive(@getDOMNode(), @props.imageStore)
+  getDefaultProps: -> {width: WIDTH, height: 576}
+  componentDidMount: -> @props.runGame(@getDOMNode())
   render: ->
     <canvas className="game-view"
         width={@props.width} height={@props.height}

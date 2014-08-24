@@ -3,7 +3,7 @@ _ = require 'underscore'
 color = require './color'
 keyboard = require './keyboard'
 {TileMap} = require './tileMap'
-{TILE_SIZE} = require './store'
+{TILE_SIZE} = require './subject'
 
 
 approach = (currentPosition, targetPosition, maxMove) ->
