@@ -270,8 +270,8 @@ initInteractive = (imageStore) ->
     sendMessage: (message) ->
       currentScene?.onMessage(message)
 
-  #sceneManager.setScene(new TitleScreen())
-  sceneManager.setScene(scenes['0-level'])
+  #sceneManager.setScene(scenes['0-level'])
+  sceneManager.setScene(new TitleScreen())
 
   run: (canvas) ->
     canvasSize = new Vector2(canvas.width, canvas.height)
