@@ -23962,9 +23962,12 @@ LogicalTileMap = (function(_super) {
     }
   };
 
-  LogicalTileMap.prototype.getIsWalkable = function(position) {
-    var _ref1;
-    return (_ref1 = this.getValue(position)) === 1 || _ref1 === 3;
+  LogicalTileMap.prototype.getIsPath = function(position) {
+    return this.getValue(position) === 1;
+  };
+
+  LogicalTileMap.prototype.getIsDoor = function(position) {
+    return this.getValue(position) === 3;
   };
 
   return LogicalTileMap;
@@ -24077,7 +24080,9 @@ KeyboardControlledTileMovementBehavior = (function(_super) {
     change = new Vector2(0, 0);
     w = (function(_this) {
       return function(x, y) {
-        return _this.logicalMap.getIsWalkable(_this.tilePosition.add(new Vector2(x, y)));
+        var p;
+        p = _this.tilePosition.add(new Vector2(x, y));
+        return _this.logicalMap.getIsPath(p) || _this.logicalMap.getIsDoor(p);
       };
     })(this);
     if (keyboard.getIsKeyDown(window.keyboardSettings.playerLeft) && w(-1, 0)) {
@@ -24122,7 +24127,7 @@ RandomWalkTileMovementBehavior = (function(_super) {
     possibleChanges = [new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, -1), new Vector2(0, 1)];
     chosenChange = _.choice([null].concat(_.filter(possibleChanges, (function(_this) {
       return function(change) {
-        return _this.logicalMap.getIsWalkable(_this.tilePosition.add(change));
+        return _this.logicalMap.getIsPath(_this.tilePosition.add(change));
       };
     })(this))));
     if (chosenChange) {
