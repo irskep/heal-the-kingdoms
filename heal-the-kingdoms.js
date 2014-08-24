@@ -23698,7 +23698,7 @@ module.exports = {
 
 
 
-},{"./color":156,"./geometry":157,"./keyboard":161,"./subject":169,"./tileMap":170,"underscore":153}],156:[function(require,module,exports){
+},{"./color":156,"./geometry":157,"./keyboard":162,"./subject":170,"./tileMap":171,"underscore":153}],156:[function(require,module,exports){
 var color, colorScss, line, lineRegex, match, _i, _len, _ref;
 
 colorScss = require('./_dawnbringer.scss');
@@ -23977,7 +23977,53 @@ module.exports = {};
 
 
 
-},{"./color":156,"./logic":162,"./model":167,"./state":168,"react/addons":4,"underscore":153}],160:[function(require,module,exports){
+},{"./color":156,"./logic":163,"./model":168,"./state":169,"react/addons":4,"underscore":153}],160:[function(require,module,exports){
+var InventoryItem, Rect2, TILE_SIZE, Vector2, _ref;
+
+_ref = require('./geometry'), Vector2 = _ref.Vector2, Rect2 = _ref.Rect2;
+
+TILE_SIZE = require('./subject').TILE_SIZE;
+
+InventoryItem = (function() {
+  function InventoryItem(tileSubject, id, label) {
+    this.tileSubject = tileSubject;
+    this.id = id;
+    this.label = label;
+  }
+
+  InventoryItem.prototype.getComponent = function(style) {
+    var backgroundSize, offset, scale;
+    if (style == null) {
+      style = {};
+    }
+    scale = TILE_SIZE.pairDivide(SRC_TILE_SIZE);
+    backgroundSize = new Vector2(this.tileSubject.sourceImage.width, this.tileSubject.sourceImage.height).pairMultiply(scale);
+    offset = new Vector2(-this.tileSubject.sourceCoordinates.x * SRC_TILE_SIZE.x, -this.tileSubject.sourceCoordinates.y * SRC_TILE_SIZE.y);
+    return React.DOM.div({
+      "className": "pixel-art-sprite",
+      "style": _.extend({
+        width: TILE_SIZE.x,
+        height: TILE_SIZE.y,
+        position: 'relative',
+        overflow: 'hidden',
+        backgroundImage: "url(" + this.tileSubject.sourceImage.src + ")",
+        backgroundPosition: "" + offset.x + "px " + offset.y + "px",
+        backgroundSize: "" + backgroundSize.x + "px " + backgroundSize.y + "px"
+      }, style)
+    });
+  };
+
+  return InventoryItem;
+
+})();
+
+module.exports = {
+  InventoryItem: InventoryItem
+};
+
+
+
+},{"./geometry":157,"./subject":170}],161:[function(require,module,exports){
 var x, _,
   __slice = [].slice;
 
@@ -24074,7 +24120,7 @@ module.exports = _.extend.apply(_, [{}].concat(__slice.call([
 
 
 
-},{"underscore":153}],161:[function(require,module,exports){
+},{"underscore":153}],162:[function(require,module,exports){
 var Bacon, keyCodeToName, keyboard,
   __slice = [].slice,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -24124,8 +24170,8 @@ module.exports = keyboard;
 
 
 
-},{"./keyCodeToName":160,"baconjs":2}],162:[function(require,module,exports){
-var Actor, Bacon, DrawableTileMap, ImageStore, InventoryItem, KeyboardControlledTileMovementBehavior, Level, LogicalTileMap, RandomWalkTileMovementBehavior, React, Rect2, SRC_TILE_SIZE, Scene, TILE_SIZE, TileSubject, TwoFrameSubject, Vector2, color, initImages, initInteractive, keyboard, util, _, _ref, _ref1, _ref2, _ref3,
+},{"./keyCodeToName":161,"baconjs":2}],163:[function(require,module,exports){
+var Actor, Bacon, DrawableTileMap, ImageStore, InventoryItem, InventoryMap, KeyboardControlledTileMovementBehavior, Level, LogicalTileMap, RandomWalkTileMovementBehavior, React, Rect2, SRC_TILE_SIZE, Scene, TILE_SIZE, TileSubject, TwoFrameSubject, Vector2, color, initImages, initInteractive, keyboard, util, _, _ref, _ref1, _ref2, _ref3,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -24149,40 +24195,9 @@ ImageStore = require('./imageStore').ImageStore;
 
 _ref2 = require('./actor'), Actor = _ref2.Actor, KeyboardControlledTileMovementBehavior = _ref2.KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior = _ref2.RandomWalkTileMovementBehavior;
 
-_ref3 = require('./tileMap'), DrawableTileMap = _ref3.DrawableTileMap, LogicalTileMap = _ref3.LogicalTileMap;
+InventoryItem = require('./inventory').InventoryItem;
 
-InventoryItem = (function() {
-  function InventoryItem(tileSubject, id, label) {
-    this.tileSubject = tileSubject;
-    this.id = id;
-    this.label = label;
-  }
-
-  InventoryItem.prototype.getComponent = function(style) {
-    var backgroundSize, offset, scale;
-    if (style == null) {
-      style = {};
-    }
-    scale = TILE_SIZE.pairDivide(SRC_TILE_SIZE);
-    backgroundSize = new Vector2(this.tileSubject.sourceImage.width, this.tileSubject.sourceImage.height).pairMultiply(scale);
-    offset = new Vector2(-this.tileSubject.sourceCoordinates.x * SRC_TILE_SIZE.x, -this.tileSubject.sourceCoordinates.y * SRC_TILE_SIZE.y);
-    return React.DOM.div({
-      "className": "pixel-art-sprite",
-      "style": _.extend({
-        width: TILE_SIZE.x,
-        height: TILE_SIZE.y,
-        position: 'relative',
-        overflow: 'hidden',
-        backgroundImage: "url(" + this.tileSubject.sourceImage.src + ")",
-        backgroundPosition: "" + offset.x + "px " + offset.y + "px",
-        backgroundSize: "" + backgroundSize.x + "px " + backgroundSize.y + "px"
-      }, style)
-    });
-  };
-
-  return InventoryItem;
-
-})();
+_ref3 = require('./tileMap'), DrawableTileMap = _ref3.DrawableTileMap, LogicalTileMap = _ref3.LogicalTileMap, InventoryMap = _ref3.InventoryMap;
 
 Scene = (function() {
   function Scene() {}
@@ -24224,9 +24239,10 @@ Level = (function(_super) {
         }
       }
     }
-    npcSubject = new TwoFrameSubject(this.imageStore, 'Player', new Vector2(0, 0), 500);
+    this.inventoryMap = new InventoryMap(this.imageStore.images['DawnLike_3/Items/Boot'], validPositions, this.logicalData);
+    npcSubject = new TwoFrameSubject(this.imageStore, 'Player', 0, 500);
     this.actors.push(new Actor(npcSubject, [new RandomWalkTileMovementBehavior(this.logicalMap, _.choice(validPositions))]));
-    playerSubject = new TwoFrameSubject(this.imageStore, 'Player', new Vector2(1, 0), 500);
+    playerSubject = new TwoFrameSubject(this.imageStore, 'Player', 1, 500);
     this.player = new Actor(playerSubject, [new KeyboardControlledTileMovementBehavior(this.logicalMap, this.logicalMap.getPlayerStartingPosition())]);
     this.actors.push(this.player);
     return this.lastTime = Date.now();
@@ -24249,6 +24265,7 @@ Level = (function(_super) {
     mapCenter = this.player.getCenter().floor();
     ctx.translate(-mapCenter.x + canvasSize.x / 2, -mapCenter.y + canvasSize.y / 2);
     this.drawableMap.render(ctx, Rect2.fromCenter(mapCenter, canvasSize));
+    this.inventoryMap.render(ctx, Rect2.fromCenter(mapCenter, canvasSize));
     _.each(this.actors, function(a) {
       return a.render(ctx);
     });
@@ -24271,7 +24288,7 @@ initInteractive = function(imageStore) {
     "0": new Level(imageStore, require('./maps/test_logical'), require('./maps/test'), {})
   };
   state = {
-    inventory: [new InventoryItem(new TileSubject(imageStore.images['DawnLike_3/Items/Boot'], new Vector2(0, 0)), 0, 'Boot')]
+    inventory: []
   };
   stateUpdates = new Bacon.Bus();
   sceneManager = {
@@ -24325,20 +24342,20 @@ module.exports = {
 
 
 
-},{"./actor":155,"./color":156,"./geometry":157,"./imageStore":158,"./keyboard":161,"./maps/1_cave":163,"./maps/1_cave_logical":164,"./maps/test":165,"./maps/test_logical":166,"./subject":169,"./tileMap":170,"./util":171,"baconjs":2,"react/addons":4,"underscore":153}],163:[function(require,module,exports){
+},{"./actor":155,"./color":156,"./geometry":157,"./imageStore":158,"./inventory":160,"./keyboard":162,"./maps/1_cave":164,"./maps/1_cave_logical":165,"./maps/test":166,"./maps/test_logical":167,"./subject":170,"./tileMap":171,"./util":172,"baconjs":2,"react/addons":4,"underscore":153}],164:[function(require,module,exports){
 module.exports={"layers": [[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 329, 330, 330, 330, 330, 330, 330, 331, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 329, 379, 400, 401, 401, 401, 401, 402, 377, 331, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 353, 400, 425, 425, 425, 425, 425, 425, 402, 353, 0, 0, 0, 0, 0, 329, 330, 330, 330, 330, 330, 331, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 353, 424, 449, 449, 449, 425, 425, 425, 426, 353, 0, 0, 0, 329, 330, 379, 401, 170, 175, 172, 402, 377, 330, 331, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 353, 427, 329, 330, 331, 448, 449, 449, 426, 377, 331, 0, 0, 353, 400, 425, 425, 194, 195, 196, 425, 425, 402, 353, 0, 0, 0, 0, 0], [0, 329, 330, 330, 330, 331, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 353, 427, 353, 0, 377, 330, 330, 331, 448, 402, 353, 0, 329, 379, 424, 425, 170, 171, 171, 171, 172, 425, 426, 377, 331, 0, 0, 0, 0], [0, 353, 400, 401, 401, 377, 330, 330, 331, 0, 0, 329, 330, 330, 330, 330, 330, 330, 330, 330, 330, 379, 427, 353, 0, 0, 0, 0, 377, 331, 427, 377, 330, 379, 400, 425, 170, 171, 171, 171, 171, 171, 172, 425, 402, 377, 330, 330, 330, 330], [0, 353, 424, 425, 425, 429, 429, 402, 353, 0, 0, 353, 400, 401, 401, 401, 429, 429, 429, 429, 429, 429, 450, 353, 0, 0, 0, 0, 0, 353, 448, 429, 429, 429, 425, 425, 194, 195, 195, 195, 195, 195, 196, 425, 449, 429, 429, 429, 429, 429], [0, 353, 448, 449, 450, 329, 331, 427, 353, 0, 0, 353, 424, 425, 425, 426, 329, 330, 330, 330, 330, 330, 330, 379, 0, 0, 0, 0, 0, 377, 330, 330, 330, 330, 331, 425, 218, 219, 219, 219, 219, 219, 220, 426, 329, 330, 330, 330, 330, 330], [0, 377, 330, 330, 330, 379, 353, 427, 353, 0, 0, 353, 424, 449, 449, 450, 329, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 353, 448, 449, 449, 449, 449, 449, 449, 449, 450, 353, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 353, 427, 353, 0, 0, 353, 427, 329, 330, 330, 379, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 377, 330, 330, 330, 330, 330, 330, 330, 330, 330, 379, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 353, 427, 377, 330, 330, 379, 427, 353, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 353, 448, 429, 429, 429, 429, 450, 353, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 377, 330, 330, 330, 330, 330, 330, 379, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 282, 0, 0, 364, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 305, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 0, 340, 341, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 364, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 280, 0, 280, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 307, 0, 0, 280, 0, 280, 0, 0, 308, 0, 0, 0, 0, 0, 0], [0, 0, 363, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 283, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 280, 0, 0, 0, 280, 13, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 363, 0, 0, 0, 0, 0, 0, 282, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 362, 0, 0, 0, 280, 0, 0, 0, 0, 0, 280, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 284, 0, 0, 0, 0, 316, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 195, 195, 195, 195, 195, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 317, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 283, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 283, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 281, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]]}
-},{}],164:[function(require,module,exports){
-module.exports={"layers": [[[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1, 1, 2, 1, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 2, 2], [2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 1, 1, 1, 2, 2, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]]]}
 },{}],165:[function(require,module,exports){
-module.exports={"layers": [[[202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 226, 226, 226, 226, 226, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 227, 267, 3, 3, 3, 267, 225, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 203, 267, 249, 250, 250, 250, 251, 267, 201, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 203, 3, 274, 274, 274, 274, 275, 3, 201, 202, 202, 202, 202, 202, 267, 267, 267, 202, 202], [202, 203, 3, 3, 3, 3, 3, 3, 3, 201, 202, 202, 202, 202, 202, 267, 267, 267, 267, 202], [202, 202, 178, 178, 178, 178, 178, 178, 178, 202, 202, 202, 202, 175, 202, 175, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 175, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 205, 178, 178, 178, 178, 178, 178, 178, 178, 178, 202, 202, 202], [202, 202, 202, 202, 202, 267, 267, 267, 201, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 267, 267, 267, 267, 225, 202, 202, 267, 3, 3, 3, 3, 3, 202, 267, 202], [202, 202, 202, 267, 267, 267, 267, 267, 267, 202, 202, 267, 274, 274, 274, 274, 274, 274, 274, 202], [202, 267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 274, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 267, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 202, 274, 274, 274, 274, 274, 267, 267, 202], [267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 267, 202, 202, 202]], [[41, 41, 41, 41, 41, 42, 0, 0, 0, 0, 19, 0, 0, 203, 197, 201, 0, 0, 0, 0], [41, 42, 65, 64, 41, 66, 0, 19, 0, 0, 0, 0, 0, 203, 197, 201, 0, 19, 0, 0], [65, 66, 0, 64, 66, 0, 0, 0, 0, 0, 0, 0, 0, 203, 197, 201, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 19, 0, 203, 197, 201, 0, 0, 0, 0], [0, 0, 0, 2, 3, 0, 0, 4, 0, 0, 0, 0, 0, 203, 197, 201, 0, 0, 226, 0], [0, 19, 2, 52, 0, 0, 0, 50, 4, 0, 0, 0, 13, 203, 197, 225, 226, 227, 267, 201], [0, 0, 26, 0, 0, 0, 0, 0, 26, 0, 0, 0, 226, 227, 197, 0, 32, 0, 267, 201], [0, 0, 0, 0, 0, 149, 0, 0, 0, 0, 0, 203, 170, 171, 195, 171, 172, 267, 32, 201], [18, 0, 0, 0, 179, 173, 177, 0, 0, 0, 0, 203, 194, 19, 195, 19, 196, 267, 177, 0], [17, 17, 18, 0, 203, 197, 225, 226, 226, 226, 226, 227, 194, 195, 19, 195, 196, 177, 0, 0], [41, 41, 42, 0, 203, 218, 171, 199, 199, 199, 199, 199, 219, 219, 219, 219, 220, 201, 0, 0], [40, 41, 41, 42, 0, 207, 197, 0, 178, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [41, 41, 66, 66, 203, 0, 197, 0, 0, 0, 0, 226, 226, 226, 226, 226, 226, 226, 226, 0], [41, 42, 0, 226, 227, 0, 197, 0, 37, 0, 203, 2, 0, 0, 0, 0, 0, 3, 4, 0], [41, 66, 227, 0, 177, 179, 197, 0, 0, 225, 227, 27, 0, 0, 0, 0, 0, 0, 26, 201], [66, 227, 0, 205, 202, 203, 175, 199, 199, 199, 199, 150, 0, 0, 0, 0, 0, 0, 26, 201], [0, 184, 186, 0, 225, 227, 197, 0, 177, 178, 207, 6, 0, 0, 0, 0, 0, 0, 26, 201], [0, 208, 209, 186, 0, 0, 197, 0, 201, 0, 179, 26, 0, 0, 0, 0, 0, 0, 26, 201], [184, 209, 209, 209, 0, 0, 197, 177, 0, 0, 203, 26, 0, 0, 0, 0, 2, 3, 52, 201], [209, 209, 209, 209, 0, 0, 197, 201, 0, 0, 203, 50, 3, 3, 3, 3, 52, 177, 178, 0]]]}
+module.exports={"layers": [[[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1, 1, 2, 1, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 2, 2], [2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 1, 1, 1, 2, 2, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]]]}
 },{}],166:[function(require,module,exports){
-module.exports={"layers": [[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 2, 2, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 2, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1]]]}
+module.exports={"layers": [[[202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 226, 226, 226, 226, 226, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 227, 267, 3, 3, 3, 267, 225, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 203, 267, 249, 250, 250, 250, 251, 267, 201, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 203, 3, 274, 274, 274, 274, 275, 3, 201, 202, 202, 202, 202, 202, 267, 267, 267, 202, 202], [202, 203, 3, 3, 3, 3, 3, 3, 3, 201, 202, 202, 202, 202, 202, 267, 267, 267, 267, 202], [202, 202, 178, 178, 178, 178, 178, 178, 178, 202, 202, 202, 202, 175, 202, 175, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 175, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 205, 178, 178, 178, 178, 178, 178, 178, 178, 178, 202, 202, 202], [202, 202, 202, 202, 202, 267, 267, 267, 201, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 267, 267, 267, 267, 225, 202, 202, 267, 3, 3, 3, 3, 3, 202, 267, 202], [202, 202, 202, 267, 267, 267, 267, 267, 267, 202, 202, 267, 274, 274, 274, 274, 274, 274, 274, 202], [202, 267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 274, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 267, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 202, 274, 274, 274, 274, 274, 267, 267, 202], [267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 267, 202, 202, 202]], [[41, 41, 41, 41, 41, 42, 0, 0, 0, 0, 19, 0, 0, 203, 197, 201, 0, 0, 0, 0], [41, 42, 65, 64, 41, 66, 0, 19, 0, 0, 0, 0, 0, 203, 197, 201, 0, 19, 0, 0], [65, 66, 0, 64, 66, 0, 0, 0, 0, 0, 0, 0, 0, 203, 197, 201, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 19, 0, 203, 197, 201, 0, 0, 0, 0], [0, 0, 0, 2, 3, 0, 0, 4, 0, 0, 0, 0, 0, 203, 197, 201, 0, 0, 226, 0], [0, 19, 2, 52, 0, 0, 0, 50, 4, 0, 0, 0, 13, 203, 197, 225, 226, 227, 267, 201], [0, 0, 26, 0, 0, 0, 0, 0, 26, 0, 0, 0, 226, 227, 197, 0, 32, 0, 267, 201], [0, 0, 0, 0, 0, 149, 0, 0, 0, 0, 0, 203, 170, 171, 195, 171, 172, 267, 32, 201], [18, 0, 0, 0, 179, 173, 177, 0, 0, 0, 0, 203, 194, 19, 195, 19, 196, 267, 177, 0], [17, 17, 18, 0, 203, 197, 225, 226, 226, 226, 226, 227, 194, 195, 19, 195, 196, 177, 0, 0], [41, 41, 42, 0, 203, 218, 171, 199, 199, 199, 199, 199, 219, 219, 219, 219, 220, 201, 0, 0], [40, 41, 41, 42, 0, 207, 197, 0, 178, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [41, 41, 66, 66, 203, 0, 197, 0, 0, 0, 0, 226, 226, 226, 226, 226, 226, 226, 226, 0], [41, 42, 0, 226, 227, 0, 197, 0, 37, 0, 203, 2, 0, 0, 0, 0, 0, 3, 4, 0], [41, 66, 227, 0, 177, 179, 197, 0, 0, 225, 227, 27, 0, 0, 0, 0, 0, 0, 26, 201], [66, 227, 0, 205, 202, 203, 175, 199, 199, 199, 199, 150, 0, 0, 0, 0, 0, 0, 26, 201], [0, 184, 186, 0, 225, 227, 197, 0, 177, 178, 207, 6, 0, 0, 0, 0, 0, 0, 26, 201], [0, 208, 209, 186, 0, 0, 197, 0, 201, 0, 179, 26, 0, 0, 0, 0, 0, 0, 26, 201], [184, 209, 209, 209, 0, 0, 197, 177, 0, 0, 203, 26, 0, 0, 0, 0, 2, 3, 52, 201], [209, 209, 209, 209, 0, 0, 197, 201, 0, 0, 203, 50, 3, 3, 3, 3, 52, 177, 178, 0]]]}
 },{}],167:[function(require,module,exports){
+module.exports={"layers": [[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 2, 2, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 2, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1]]]}
+},{}],168:[function(require,module,exports){
 module.exports = {};
 
 
 
-},{}],168:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 var getItem, setItem, _;
 
 _ = require('underscore');
@@ -24381,7 +24398,7 @@ module.exports = {
 
 
 
-},{"underscore":153}],169:[function(require,module,exports){
+},{"underscore":153}],170:[function(require,module,exports){
 var Bacon, Rect2, SRC_TILE_SIZE, TILE_SIZE, TileSubject, TwoFrameSubject, Vector2, drawTile, _, _ref;
 
 Bacon = require('baconjs');
@@ -24400,9 +24417,12 @@ drawTile = function(sourceImage, sourceCoordinates, ctx, position) {
 };
 
 TileSubject = (function() {
-  function TileSubject(sourceImage, sourceCoordinates) {
+  function TileSubject(sourceImage, sourceIndex) {
+    var imageColumns;
     this.sourceImage = sourceImage;
-    this.sourceCoordinates = sourceCoordinates;
+    this.sourceIndex = sourceIndex;
+    imageColumns = this.sourceImage.width / SRC_TILE_SIZE.x;
+    this.sourceCoordinates = new Vector2(this.sourceIndex % imageColumns, Math.floor(this.sourceIndex / imageColumns));
   }
 
   TileSubject.prototype.render = function(ctx, position) {
@@ -24414,13 +24434,13 @@ TileSubject = (function() {
 })();
 
 TwoFrameSubject = (function() {
-  function TwoFrameSubject(imageStore, imageName, sourceCoordinates, animationPeriod) {
+  function TwoFrameSubject(imageStore, imageName, sourceIndex, animationPeriod) {
     this.imageStore = imageStore;
     this.imageName = imageName;
-    this.sourceCoordinates = sourceCoordinates;
+    this.sourceIndex = sourceIndex;
     this.animationPeriod = animationPeriod;
     this.animationOffset = _.random(this.animationPeriod - 1);
-    this.frameTileSubjects = [new TileSubject(this.imageStore.images[this.imageName + '0'], this.sourceCoordinates), new TileSubject(this.imageStore.images[this.imageName + '1'], this.sourceCoordinates)];
+    this.frameTileSubjects = [new TileSubject(this.imageStore.images[this.imageName + '0'], this.sourceIndex), new TileSubject(this.imageStore.images[this.imageName + '1'], this.sourceIndex)];
   }
 
   TwoFrameSubject.prototype.render = function(ctx, position) {
@@ -24443,8 +24463,8 @@ module.exports = {
 
 
 
-},{"./geometry":157,"baconjs":2,"underscore":153}],170:[function(require,module,exports){
-var DrawableTileMap, LogicalTileMap, Rect2, SRC_TILE_SIZE, TILE_SIZE, TileMap, Vector2, drawTile, _, _ref, _ref1,
+},{"./geometry":157,"baconjs":2,"underscore":153}],171:[function(require,module,exports){
+var DrawableTileMap, InventoryItem, InventoryMap, LogicalTileMap, Rect2, SRC_TILE_SIZE, TILE_SIZE, TileMap, TileSubject, Vector2, drawTile, _, _ref, _ref1,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __slice = [].slice;
@@ -24453,7 +24473,9 @@ _ = require('underscore');
 
 _ref = require('./geometry'), Vector2 = _ref.Vector2, Rect2 = _ref.Rect2;
 
-_ref1 = require('./subject'), TILE_SIZE = _ref1.TILE_SIZE, drawTile = _ref1.drawTile, SRC_TILE_SIZE = _ref1.SRC_TILE_SIZE;
+_ref1 = require('./subject'), TILE_SIZE = _ref1.TILE_SIZE, drawTile = _ref1.drawTile, SRC_TILE_SIZE = _ref1.SRC_TILE_SIZE, TileSubject = _ref1.TileSubject;
+
+InventoryItem = require('./inventory').InventoryItem;
 
 TileMap = (function() {
   TileMap.worldCoordsToTileCoords = function(worldPoint, floorOrCeil) {
@@ -24568,15 +24590,67 @@ LogicalTileMap = (function(_super) {
 
 })(TileMap);
 
+InventoryMap = (function(_super) {
+  __extends(InventoryMap, _super);
+
+  function InventoryMap() {
+    var args, inventoryImage, positions, validPositions;
+    inventoryImage = arguments[0], validPositions = arguments[1], args = 3 <= arguments.length ? __slice.call(arguments, 2) : [];
+    this.inventoryImage = inventoryImage;
+    InventoryMap.__super__.constructor.apply(this, args);
+    positions = _.first(_.shuffle(validPositions), 20);
+    console.log('boots at', positions);
+    this.data = _.map(this.mapData.layers[0], (function(_this) {
+      return function(row, rowIndex) {
+        return _.map(row, function(value, col) {
+          if (_.find(positions, function(pos) {
+            return pos.x === col && pos.y === rowIndex;
+          })) {
+            return new InventoryItem(new TileSubject(_this.inventoryImage, _.random(10)), value, '?');
+          } else {
+            return null;
+          }
+        });
+      };
+    })(this));
+  }
+
+  InventoryMap.prototype.render = function(ctx, worldRect) {
+    var endX, endY, position, startX, startY, worldRectMax, worldRectMin, x, y, _i, _j;
+    worldRectMin = TileMap.worldCoordsToTileCoords(worldRect.getMin(), 'floor');
+    worldRectMax = TileMap.worldCoordsToTileCoords(worldRect.getMax(), 'ceil');
+    startX = Math.max(0, worldRectMin.x);
+    startY = Math.max(0, worldRectMin.y);
+    endX = Math.min(this.size.x, worldRectMax.x);
+    endY = Math.min(this.size.y, worldRectMax.y);
+    for (y = _i = startY; startY <= endY ? _i < endY : _i > endY; y = startY <= endY ? ++_i : --_i) {
+      for (x = _j = startX; startX <= endX ? _j < endX : _j > endX; x = startX <= endX ? ++_j : --_j) {
+        if (this.data[y][x]) {
+          position = TILE_SIZE.pairMultiply({
+            x: x,
+            y: y
+          });
+          this.data[y][x].tileSubject.render(ctx, position);
+        }
+      }
+    }
+    return null;
+  };
+
+  return InventoryMap;
+
+})(TileMap);
+
 module.exports = {
   TileMap: TileMap,
   DrawableTileMap: DrawableTileMap,
-  LogicalTileMap: LogicalTileMap
+  LogicalTileMap: LogicalTileMap,
+  InventoryMap: InventoryMap
 };
 
 
 
-},{"./geometry":157,"./subject":169,"underscore":153}],171:[function(require,module,exports){
+},{"./geometry":157,"./inventory":160,"./subject":170,"underscore":153}],172:[function(require,module,exports){
 var _;
 
 _ = require('underscore');
