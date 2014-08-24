@@ -23507,9 +23507,11 @@ module.exports = warning;
 module.exports = "$black: rgb(20, 12, 28);\n\n$maroon: rgb(68, 36, 52);\n$purple: rgb(48, 52, 109);\n\n$darkgray: rgb(78, 74, 78);\n$lightgray: rgb(133, 149, 161);\n\n$brown: rgb(133, 76, 48);\n$darksand: rgb(117, 113, 97);\n$orange: rgb(210, 125, 44);\n\n$darkgreen: rgb(52, 101, 36);\n$green: rgb(109, 170, 44);\n$lightgreen: rgb(222, 238, 214);\n\n$red: rgb(208, 70, 72);\n$salmon: rgb(210, 170, 153);\n\n$skyblue: rgb(89, 125, 206);\n$teal: rgb(109, 194, 202);\n\n$yellow: rgb(218, 212, 94);\n";
 
 },{}],155:[function(require,module,exports){
-var Actor, KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior, Rect2, TILE_SIZE, TileMap, TileMovementBehavior, Vector2, approach, color, keyboard, _, _ref,
+var Actor, Bacon, KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior, Rect2, TILE_SIZE, TileMap, TileMovementBehavior, Vector2, approach, color, keyboard, _, _ref,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Bacon = require('baconjs');
 
 _ = require('underscore');
 
@@ -23582,6 +23584,7 @@ TileMovementBehavior = (function() {
   TileMovementBehavior.prototype.init = function(actor) {
     this.actor = actor;
     this.actor.worldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
+    this.actor.tilePositionUpdates = new Bacon.Bus();
     this.targetWorldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
     return this.decide();
   };
@@ -23589,6 +23592,7 @@ TileMovementBehavior = (function() {
   TileMovementBehavior.prototype.setTilePosition = function(newTilePosition) {
     this.tilePosition = newTilePosition;
     this.actor.tilePosition = this.tilePosition;
+    this.actor.tilePositionUpdates.push(this.tilePosition);
     return this.targetWorldPosition = TileMap.tileCoordsToWorldCoords(this.tilePosition);
   };
 
@@ -23699,7 +23703,7 @@ module.exports = {
 
 
 
-},{"./color":156,"./geometry":157,"./keyboard":162,"./subject":170,"./tileMap":171,"underscore":153}],156:[function(require,module,exports){
+},{"./color":156,"./geometry":157,"./keyboard":162,"./subject":170,"./tileMap":171,"baconjs":2,"underscore":153}],156:[function(require,module,exports){
 var color, colorScss, line, lineRegex, match, _i, _len, _ref;
 
 colorScss = require('./_dawnbringer.scss');
@@ -23892,7 +23896,7 @@ HTKRoot = React.createClass({
         marginTop: 0
       },
       "className": "title"
-    }, "Heal the Kingdoms"), GameView(null), React.DOM.p(null, "Move with WASD. Switch levels with the number keys."));
+    }, "Heal the Kingdoms"), GameView(null));
   }
 });
 
@@ -23928,11 +23932,12 @@ GameView = React.createClass({
   },
   render: function() {
     if (this.state.isLoaded && this.state.gameState) {
-      return React.DOM.div(null, WorldView({
-        "runGame": this.state.runGame
-      }), Inventory({
+      return React.DOM.div(null, React.DOM.p(null, "Move with WASD. Switch levels with the number keys."), Inventory({
         "items": this.state.gameState.inventory,
         "sceneManager": this.state.sceneManager
+      }), WorldView({
+        "runGame": this.state.runGame,
+        "gameState": this.state.gameState
       }));
     } else {
       return React.DOM.span(null, "\"Still loading...\"");
@@ -23945,7 +23950,9 @@ Inventory = React.createClass({
   render: function() {
     return React.DOM.div({
       "style": {
-        width: WIDTH
+        width: WIDTH,
+        height: 32,
+        backgroundColor: color.brown
       }
     }, _.map(this.props.items, (function(_this) {
       return function(item) {
@@ -24002,10 +24009,15 @@ WorldView = React.createClass({
     };
   },
   componentDidMount: function() {
-    return this.props.runGame(this.getDOMNode());
+    return this.props.runGame(this.getDOMNode().getElementsByTagName('canvas')[0]);
   },
   render: function() {
-    return React.DOM.canvas({
+    return React.DOM.div({
+      "style": {
+        position: 'relative',
+        width: this.props.width
+      }
+    }, React.DOM.canvas({
       "className": "game-view",
       "width": this.props.width,
       "height": this.props.height,
@@ -24014,7 +24026,9 @@ WorldView = React.createClass({
         height: this.props.height,
         backgroundColor: 'darkgreen'
       }
-    });
+    }), this.props.gameState.text && React.DOM.div({
+      "className": "in-game-text"
+    }, this.props.gameState.text));
   }
 });
 
@@ -24263,6 +24277,24 @@ Level = (function(_super) {
     this.scripts = scripts;
     this.drawableMap = new DrawableTileMap(this.imageStore.images['tiles'], this.drawData);
     this.logicalMap = new LogicalTileMap(this.logicalData);
+    this.textMap = (function() {
+      var data;
+      data = {
+        0: {
+          0: "YAY TEXT!"
+        },
+        3: {
+          24: "Far across the land, blah blah blabbety blah."
+        }
+      };
+      return {
+        getText: function(position) {
+          var _ref4;
+          return (_ref4 = data[position.y]) != null ? _ref4[position.x] : void 0;
+        }
+      };
+    })();
+    this.teardowns = [];
   }
 
   Level.prototype.init = function(sceneManager) {
@@ -24284,7 +24316,7 @@ Level = (function(_super) {
     playerSubject = new TwoFrameSubject(this.imageStore, 'Player', 1, 500);
     this.player = new Actor(playerSubject, [new KeyboardControlledTileMovementBehavior(this.logicalMap, this.logicalMap.getPlayerStartingPosition())]);
     this.actors.push(this.player);
-    keyboard.downs('space').onValue((function(_this) {
+    this.teardowns.push(keyboard.downs('space').onValue((function(_this) {
       return function(_arg) {
         var event, item;
         event = _arg.event;
@@ -24296,8 +24328,21 @@ Level = (function(_super) {
           return _this.sceneManager.notifyState();
         }
       };
-    })(this));
+    })(this)));
+    this.teardowns.push(this.player.tilePositionUpdates.skipDuplicates(_.isEqual).onValue((function(_this) {
+      return function(position) {
+        _this.sceneManager.getState().text = _this.textMap.getText(position);
+        return _this.sceneManager.notifyState();
+      };
+    })(this)));
+    this.player.tilePositionUpdates.push(this.player.tilePosition);
     return this.lastTime = Date.now();
+  };
+
+  Level.prototype.teardown = function() {
+    return _.each(this.teardowns, function(t) {
+      return t();
+    });
   };
 
   Level.prototype.onMessage = function(message) {
@@ -24348,7 +24393,8 @@ initInteractive = function(imageStore) {
     "0": new Level(imageStore, require('./maps/test_logical'), require('./maps/test'), {})
   };
   state = {
-    inventory: []
+    inventory: [],
+    text: null
   };
   stateUpdates = new Bacon.Bus();
   sceneManager = {
