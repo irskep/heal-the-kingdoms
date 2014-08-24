@@ -106,7 +106,7 @@ class Actor
 
 
 class TileMovementBehavior
-  constructor: (@tilePosition) ->
+  constructor: (@tilePosition, @speed) ->
 
   init: (@actor) ->
     @actor.worldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
@@ -119,11 +119,10 @@ class TileMovementBehavior
     @targetWorldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
 
   update: (dt) ->
-    SPEED = 4  # tiles per second
-    SPEED_PX = TILE_SIZE.multiply(SPEED)
+    speedVector = TILE_SIZE.multiply(@speed)
     unless @actor.worldPosition.isEqual(@targetWorldPosition)
       @actor.worldPosition = approach(
-        @actor.worldPosition, @targetWorldPosition, SPEED_PX.multiply(dt))
+        @actor.worldPosition, @targetWorldPosition, speedVector.multiply(dt))
 
     if @getShouldDecide()
       @decide()
@@ -135,21 +134,25 @@ class TileMovementBehavior
 
 class RandomWalkTileMovementBehavior extends TileMovementBehavior
 
-  constructor: (@logicalMap, args...) ->
-    super(args...)
+  constructor: (@logicalMap, @tilePosition, @speed=3) ->
+    super(@tilePosition, @speed)
+    @greenLightTime = Date.now()
 
   decide: ->
+    return unless Date.now() >= @greenLightTime
     possibleChanges = [
       new Vector2(-1, 0),
       new Vector2(1, 0),
       new Vector2(0, -1),
       new Vector2(0, 1),
     ]
-    chosenChange = _.choice _.filter possibleChanges, (change) =>
+    chosenChange = _.choice [null].concat _.filter possibleChanges, (change) =>
       @logicalMap.getIsWalkable(@tilePosition.add(change))
-    return unless chosenChange
 
-    @setTilePosition @tilePosition.add chosenChange
+    if chosenChange
+      @setTilePosition @tilePosition.add chosenChange
+    else
+      @greenLightTime = Date.now() + _.random(500, 2000)
 
 
 init = (canvas) ->
@@ -163,7 +166,7 @@ init = (canvas) ->
     npcSubject = new TwoFrameSubject(
       imageStore, 'Player', new Vector2(0, 0), 500)
     actors.push new Actor(npcSubject, [
-      new RandomWalkTileMovementBehavior(logicalMap, new Vector2(10, 10)),
+      new RandomWalkTileMovementBehavior(logicalMap, new Vector2(5, 5)),
     ])
 
     ctx = canvas.getContext('2d')
