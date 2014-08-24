@@ -14,6 +14,9 @@ window.keyboardSettings =
   playerRight: 'd'
   playerUp: 'w'
   playerDown: 's'
+  playerAction: 'space'
+  playerStabLeft: ','
+  playerStabRight: '.'
 
 WIDTH = 768
 

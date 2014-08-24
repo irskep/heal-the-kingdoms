@@ -25,9 +25,10 @@ class Scene
 class TitleScreen
   constructor: ->
   init: (@sceneManager) ->
-    keyboard.downs('space').take(1).onValue ({event}) =>
-      event.preventDefault()
-      @sceneManager.setScene @sceneManager.scenes["0-preamble"]
+    keyboard.downs(window.keyboardSettings.playerAction).take(1)
+      .onValue ({event}) =>
+        event.preventDefault()
+        @sceneManager.setScene @sceneManager.scenes["0-preamble"]
   update: ->
   render: (ctx, canvasSize) ->
     ctx.save()
@@ -39,14 +40,15 @@ class TitleScreen
     ctx.fillText "Heal the Kingdoms", canvasSize.x / 2, canvasSize.y / 3
 
     ctx.font = '48pt Niconne'
-    ctx.fillText "Press Space to begin.", canvasSize.x / 2, canvasSize.y / 1.6
+    ctx.fillText("Press #{window.keyboardSettings.playerAction} to begin.",
+      canvasSize.x / 2, canvasSize.y / 1.6)
     ctx.restore()
 
 
 class Preamble
   constructor: ({@text, @nextScene}) ->
   init: (@sceneManager) ->
-    keyboard.downs('space').take(1).onValue =>
+    keyboard.downs(window.keyboardSettings.playerAction).take(1).onValue =>
       @sceneManager.setScene @sceneManager.scenes[@nextScene]
   update: ->
   render: (ctx, canvasSize) ->
@@ -59,7 +61,9 @@ class Preamble
     ctx.fillStyle = color.yellow
     ctx.fillText @text, 20, 30, canvasSize.x - 40
 
-    ctx.fillText "Press space to continue.", 20, canvasSize.y - 10
+    ctx.fillText(
+      "Press #{window.keyboardSettings.playerAction} to continue.",
+      20, canvasSize.y - 10)
     ctx.restore()
 
 
@@ -91,11 +95,13 @@ class Level extends Scene
       @imageStore.images['DawnLike_3/Items/Boot'], validPositions,
       @logicalData)
 
+    @npcs = []
     npcSubject = new TwoFrameSubject(@imageStore, 'Player', 0, 500)
-    @actors.push new Actor(npcSubject, [
+    @npcs.push new Actor(npcSubject, [
       new RandomWalkTileMovementBehavior(
         @logicalMap, _.choice(validPositions)),
     ])
+    _.each @npcs, (npc) => @actors.push(npc)
 
     playerSubject = new TwoFrameSubject(@imageStore, 'Player', 1, 500)
     @player = new Actor(playerSubject, [
@@ -104,13 +110,31 @@ class Level extends Scene
     ])
     @actors.push @player
 
-    @teardowns.push(keyboard.downs('space').onValue ({event}) =>
-      event.preventDefault()
-      item = @inventoryMap.getItem(@player.tilePosition)
-      if item
-        @inventoryMap.removeItem(@player.tilePosition)
-        @sceneManager.getState().inventory.push(item)
-        @sceneManager.notifyState()
+    stabs = (
+      keyboard.downs(window.keyboardSettings.playerStabLeft)
+        .map(new Vector2(-1, 0))
+    ).merge(
+      keyboard.downs(window.keyboardSettings.playerStabRight)
+        .map(new Vector2(1, 0))
+    )
+    @teardowns.push(stabs.onValue (stab) =>
+      stabTargetPosition = @player.tilePosition.add(stab)
+      stabTarget = _.find @npcs, (npc) ->
+        npc.tilePosition.isEqual(stabTargetPosition)
+      if stabTarget
+        @npcs = _.without @npcs, stabTarget
+        @actors = _.without @actors, stabTarget
+        @scripts.onDeath?(stabTarget)
+    )
+
+    @teardowns.push(keyboard.downs(window.keyboardSettings.playerAction)
+      .onValue ({event}) =>
+        event.preventDefault()
+        item = @inventoryMap.getItem(@player.tilePosition)
+        if item
+          @inventoryMap.removeItem(@player.tilePosition)
+          @sceneManager.getState().inventory.push(item)
+          @sceneManager.notifyState()
     )
 
     @teardowns.push(@player.tilePositionUpdates.skipDuplicates(_.isEqual)
@@ -151,6 +175,23 @@ class Level extends Scene
     @drawableMap.render(ctx, Rect2.fromCenter(mapCenter, canvasSize))
     @inventoryMap.render(ctx, Rect2.fromCenter(mapCenter, canvasSize))
     _.each @actors, (a) -> a.render(ctx)
+
+    if keyboard.getIsKeyDown(window.keyboardSettings.playerStabLeft)
+      ctx.fillStyle = 'red'
+      ctx.beginPath()
+      ctx.arc(
+        @player.worldPosition.x - TILE_SIZE.x / 2,
+        @player.worldPosition.y + TILE_SIZE.y / 2,
+        TILE_SIZE.x / 4, 0, Math.PI * 2)
+      ctx.fill()
+    else if keyboard.getIsKeyDown(window.keyboardSettings.playerStabRight)
+      ctx.fillStyle = 'red'
+      ctx.beginPath()
+      ctx.arc(
+        @player.worldPosition.x + TILE_SIZE.x * 1.5,
+        @player.worldPosition.y + TILE_SIZE.y / 2,
+        TILE_SIZE.x / 4, 0, Math.PI * 2);
+      ctx.fill()
     ctx.restore()
 
 
@@ -169,7 +210,9 @@ initInteractive = (imageStore) ->
       imageStore,
       logicalData: require('./maps/test_logical'),
       drawData: require('./maps/test'),
-      scripts: {}}),
+      scripts: {
+        onDeath: (stabTarget) -> console.log "You killed", stabTarget
+      }}),
     "1-preamble": new Preamble({
       text: "You are about to begin level 1."
       nextScene: "1-level"
@@ -195,7 +238,8 @@ initInteractive = (imageStore) ->
     sendMessage: (message) ->
       currentScene?.onMessage(message)
 
-  sceneManager.setScene(new TitleScreen())
+  #sceneManager.setScene(new TitleScreen())
+  sceneManager.setScene(scenes['0-level'])
 
   run: (canvas) ->
     canvasSize = new Vector2(canvas.width, canvas.height)
