@@ -3,7 +3,7 @@ require('./src/index');
 
 
 
-},{"./src/index":157}],2:[function(require,module,exports){
+},{"./src/index":158}],2:[function(require,module,exports){
 (function (global){
 (function() {
   var Bacon, BufferingSource, Bus, CompositeUnsubscribe, ConsumingSource, DepCache, Desc, Dispatcher, End, Error, Event, EventStream, Exception, Initial, Next, None, Observable, Property, PropertyDispatcher, Some, Source, UpdateBarrier, addPropertyInitValueToStream, assert, assertArray, assertEventStream, assertFunction, assertNoArguments, assertString, cloneArray, compositeUnsubscribe, containsDuplicateDeps, convertArgsToFunction, describe, end, eventIdCounter, findDeps, flatMap_, former, idCounter, initial, isArray, isFieldKey, isFunction, isObservable, latterF, liftCallback, makeFunction, makeFunctionArgs, makeFunction_, makeObservable, makeSpawner, next, nop, partiallyApplied, recursionDepth, registerObs, spys, toCombinator, toEvent, toFieldExtractor, toFieldKey, toOption, toSimpleExtractor, withDescription, withMethodCallSupport, _, _ref,
@@ -23507,493 +23507,21 @@ module.exports = warning;
 module.exports = "$black: rgb(20, 12, 28);\n\n$maroon: rgb(68, 36, 52);\n$purple: rgb(48, 52, 109);\n\n$darkgray: rgb(78, 74, 78);\n$lightgray: rgb(133, 149, 161);\n\n$brown: rgb(133, 76, 48);\n$darksand: rgb(117, 113, 97);\n$orange: rgb(210, 125, 44);\n\n$darkgreen: rgb(52, 101, 36);\n$green: rgb(109, 170, 44);\n$lightgreen: rgb(222, 238, 214);\n\n$red: rgb(208, 70, 72);\n$salmon: rgb(210, 170, 153);\n\n$skyblue: rgb(89, 125, 206);\n$teal: rgb(109, 194, 202);\n\n$yellow: rgb(218, 212, 94);\n";
 
 },{}],155:[function(require,module,exports){
-var color, colorScss, line, lineRegex, match, _i, _len, _ref;
-
-colorScss = require('./_dawnbringer.scss');
-
-color = {};
-
-_ref = colorScss.match(/[^\r\n]+/g);
-for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-  line = _ref[_i];
-  lineRegex = /\$(.*): (.*);/g;
-  match = lineRegex.exec(line);
-  if (match) {
-    color[match[1]] = match[2];
-  }
-}
-
-module.exports = color;
-
-
-
-},{"./_dawnbringer.scss":154}],156:[function(require,module,exports){
-var Rect2, Vector2;
-
-Vector2 = (function() {
-  function Vector2(x, y) {
-    this.x = x;
-    this.y = y;
-    if (isNaN(this.x) || isNaN(this.y)) {
-      throw "NaN";
-    }
-  }
-
-  Vector2.prototype.floor = function() {
-    return new Vector2(Math.floor(this.x), Math.floor(this.y));
-  };
-
-  Vector2.prototype.ceil = function() {
-    return new Vector2(Math.ceil(this.x), Math.ceil(this.y));
-  };
-
-  Vector2.prototype.multiply = function(factor) {
-    return new Vector2(this.x * factor, this.y * factor);
-  };
-
-  Vector2.prototype.pairMultiply = function(other) {
-    return new Vector2(this.x * other.x, this.y * other.y);
-  };
-
-  Vector2.prototype.pairDivide = function(other) {
-    return new Vector2(this.x / other.x, this.y / other.y);
-  };
-
-  Vector2.prototype.isEqual = function(other) {
-    return this.x === other.x && this.y === other.y;
-  };
-
-  Vector2.prototype.clone = function() {
-    return new Vector2(this.x, this.y);
-  };
-
-  Vector2.prototype.add = function(other) {
-    return new Vector2(this.x + other.x, this.y + other.y);
-  };
-
-  return Vector2;
-
-})();
-
-Rect2 = (function() {
-  function Rect2(xmin, ymin, xmax, ymax) {
-    this.xmin = xmin;
-    this.ymin = ymin;
-    this.xmax = xmax;
-    this.ymax = ymax;
-    if (isNaN(this.xmin) || isNaN(this.ymin) || isNaN(this.xmax) || isNaN(this.ymax)) {
-      throw "NaN";
-    }
-  }
-
-  Rect2.prototype.getMin = function() {
-    return new Vector2(this.xmin, this.ymin);
-  };
-
-  Rect2.prototype.getMax = function() {
-    return new Vector2(this.xmax, this.ymax);
-  };
-
-  Rect2.fromCenter = function(center, size) {
-    var halfSize;
-    halfSize = size.multiply(0.5);
-    return new Rect2(center.x - halfSize.x, center.y - halfSize.y, center.x + halfSize.x, center.y + halfSize.y);
-  };
-
-  return Rect2;
-
-})();
-
-module.exports = {
-  Vector2: Vector2,
-  Rect2: Rect2
-};
-
-
-
-},{}],157:[function(require,module,exports){
-var GameView, HTKRoot, React, WorldView, color, logic, model, state, _;
-
-_ = require('underscore');
-
-window.React = React = require('react/addons');
-
-state = require('./state');
-
-logic = require('./logic');
-
-model = require('./model');
-
-color = require('./color');
-
-window.keyboardSettings = {
-  playerLeft: 'a',
-  playerRight: 'd',
-  playerUp: 'w',
-  playerDown: 's'
-};
-
-$(function() {
-  return React.renderComponent(HTKRoot(null), $('#htk-root').get(0));
-});
-
-HTKRoot = React.createClass({
-  displayName: 'HTKRoot',
-  render: function() {
-    return React.DOM.div(null, React.DOM.h1({
-      "style": {
-        marginTop: 0
-      },
-      "className": "title"
-    }, "Heal the Kingdoms"), GameView(null), React.DOM.p(null, "Move with WASD. Switch levels with the number keys."));
-  }
-});
-
-GameView = React.createClass({
-  displayName: 'GameView',
-  getInitialState: function() {
-    return {
-      isLoaded: false
-    };
-  },
-  componentDidMount: function() {
-    var imageStore;
-    imageStore = logic.initImages();
-    this.setState({
-      imageStore: imageStore
-    });
-    return imageStore.isComplete.filter(_.identity).onValue((function(_this) {
-      return function() {
-        return _this.setState({
-          isLoaded: true
-        });
-      };
-    })(this));
-  },
-  render: function() {
-    return React.DOM.div(null, !this.state.isLoaded && "Still loading...", this.state.isLoaded && WorldView({
-      "imageStore": this.state.imageStore
-    }));
-  }
-});
-
-WorldView = React.createClass({
-  displayName: 'WorldView',
-  getDefaultProps: function() {
-    return {
-      width: 768,
-      height: 576
-    };
-  },
-  componentDidMount: function() {
-    return logic.initInteractive(this.getDOMNode(), this.props.imageStore);
-  },
-  render: function() {
-    return React.DOM.canvas({
-      "className": "game-view",
-      "width": this.props.width,
-      "height": this.props.height,
-      "style": {
-        width: this.props.width,
-        height: this.props.height,
-        backgroundColor: 'darkgreen'
-      }
-    });
-  }
-});
-
-module.exports = {};
-
-
-
-},{"./color":155,"./logic":160,"./model":165,"./state":166,"react/addons":4,"underscore":153}],158:[function(require,module,exports){
-var x, _,
-  __slice = [].slice;
-
-_ = require('underscore');
-
-module.exports = _.extend.apply(_, [{}].concat(__slice.call([
-  _.object((function() {
-    var _i, _results;
-    _results = [];
-    for (x = _i = 65; _i <= 90; x = ++_i) {
-      _results.push([x, String.fromCharCode(x).toLowerCase()]);
-    }
-    return _results;
-  })()), {
-    32: 'space',
-    13: 'enter',
-    9: 'tab',
-    27: 'esc',
-    8: 'backspace'
-  }, {
-    16: 'shift',
-    17: 'control',
-    18: 'alt',
-    20: 'capslock',
-    144: 'numlock'
-  }, {
-    49: '1',
-    50: '2',
-    51: '3',
-    52: '4',
-    53: '5',
-    54: '6',
-    55: '7',
-    56: '8',
-    57: '9',
-    48: '0'
-  }, {
-    186: ';',
-    187: '=',
-    189: '-',
-    59: ';',
-    61: '=',
-    109: '-',
-    188: ',',
-    190: '.',
-    191: '/',
-    192: '`',
-    219: '[',
-    220: '\\',
-    221: ']',
-    222: '\''
-  }, {
-    37: 'left',
-    38: 'up',
-    39: 'right',
-    40: 'down'
-  }, {
-    45: 'insert',
-    46: 'delete',
-    36: 'home',
-    35: 'end',
-    33: 'pageup',
-    34: 'pagedown'
-  }, _.object((function() {
-    var _i, _results;
-    _results = [];
-    for (x = _i = 1; _i <= 19; x = ++_i) {
-      _results.push([x + 111, "F" + x]);
-    }
-    return _results;
-  })()), {
-    110: '.',
-    96: 'num0',
-    97: 'num1',
-    98: 'num2',
-    99: 'num3',
-    100: 'num4',
-    101: 'num5',
-    102: 'num6',
-    103: 'num7',
-    104: 'num8',
-    105: 'num9',
-    107: 'num+',
-    109: 'num-',
-    106: 'num*',
-    111: 'num/'
-  }, {
-    91: 'start_or_command',
-    92: 'start_or_command',
-    93: 'menu',
-    224: 'start_or_command'
-  }
-])));
-
-
-
-},{"underscore":153}],159:[function(require,module,exports){
-var Bacon, keyCodeToName, keyboard,
-  __slice = [].slice,
-  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
-Bacon = require('baconjs');
-
-keyCodeToName = require('./keyCodeToName');
-
-keyboard = (function() {
-  var $document, downs, pressedKeys, ups;
-  pressedKeys = {};
-  $document = $(document);
-  downs = $document.asEventStream('keydown').map(function(e) {
-    return keyCodeToName[e.keyCode];
-  });
-  ups = $document.asEventStream('keyup').map(function(e) {
-    return keyCodeToName[e.keyCode];
-  });
-  downs.onValue(function(k) {
-    return pressedKeys[k] = true;
-  });
-  ups.onValue(function(k) {
-    return pressedKeys[k] = false;
-  });
-  return {
-    getIsKeyDown: function(k) {
-      return !!pressedKeys[k];
-    },
-    downs: function() {
-      var keys;
-      keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      return downs.filter(function(k) {
-        return __indexOf.call(keys, k) >= 0;
-      });
-    },
-    ups: function() {
-      var keys;
-      keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      return ups.filter(function(k) {
-        return __indexOf.call(keys, k) >= 0;
-      });
-    }
-  };
-})();
-
-module.exports = keyboard;
-
-
-
-},{"./keyCodeToName":158,"baconjs":2}],160:[function(require,module,exports){
-var Actor, DrawableTileMap, ImageStore, KeyboardControlledTileMovementBehavior, Level, LogicalTileMap, RandomWalkTileMovementBehavior, Rect2, SRC_TILE_SIZE, Scene, TILE_SIZE, TileMap, TileMovementBehavior, TwoFrameSubject, Vector2, approach, color, drawTile, initImages, initInteractive, keyboard, store, _, _ref,
+var Actor, KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior, Rect2, TILE_SIZE, TileMap, TileMovementBehavior, Vector2, approach, color, keyboard, _, _ref,
   __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-  __slice = [].slice;
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 _ = require('underscore');
-
-_.choice = function(options, weights, totalWeight) {
-  var i, r, total, upto, _i, _ref;
-  if (weights == null) {
-    weights = null;
-  }
-  if (totalWeight == null) {
-    totalWeight = null;
-  }
-  if (!(options != null ? options.length : void 0)) {
-    return null;
-  }
-  if (!weights) {
-    return options[_.random(0, options.length - 1)];
-  }
-  total = totalWeight || _.sum(weights);
-  r = Math.random() * total;
-  upto = 0;
-  for (i = _i = 0, _ref = weights.length; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-    if (upto + weights[i] > r) {
-      return options[i];
-    }
-    upto += weights[i];
-  }
-  throw "Shouldn't get here";
-};
 
 _ref = require('./geometry'), Vector2 = _ref.Vector2, Rect2 = _ref.Rect2;
 
 color = require('./color');
 
-store = require('./store');
-
 keyboard = require('./keyboard');
 
-ImageStore = store.ImageStore, TILE_SIZE = store.TILE_SIZE, TwoFrameSubject = store.TwoFrameSubject, drawTile = store.drawTile, drawTile = store.drawTile, SRC_TILE_SIZE = store.SRC_TILE_SIZE;
+TileMap = require('./tileMap').TileMap;
 
-window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.oRequestAnimationFrame;
-
-TileMap = (function() {
-  TileMap.worldCoordsToTileCoords = function(worldPoint, floorOrCeil) {
-    if (floorOrCeil == null) {
-      floorOrCeil = 'floor';
-    }
-    return worldPoint.pairDivide(TILE_SIZE)[floorOrCeil]();
-  };
-
-  TileMap.tileCoordsToWorldCoords = function(tilePoint) {
-    return tilePoint.pairMultiply(TILE_SIZE);
-  };
-
-  function TileMap(mapData) {
-    this.mapData = mapData;
-    this.size = new Vector2(this.mapData.layers[0][0].length, this.mapData.layers[0].length);
-  }
-
-  return TileMap;
-
-})();
-
-DrawableTileMap = (function(_super) {
-  __extends(DrawableTileMap, _super);
-
-  function DrawableTileMap() {
-    var args, imageColumns, mapTileImage;
-    mapTileImage = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-    this.mapTileImage = mapTileImage;
-    DrawableTileMap.__super__.constructor.apply(this, args);
-    imageColumns = this.mapTileImage.width / SRC_TILE_SIZE.x;
-    this.layers = _.map(this.mapData.layers, function(layer) {
-      return _.map(layer, function(row) {
-        return _.map(row, function(index) {
-          index -= 1;
-          return new Vector2(index % imageColumns, Math.floor(index / imageColumns));
-        });
-      });
-    });
-  }
-
-  DrawableTileMap.prototype.render = function(ctx, worldRect) {
-    var endX, endY, layer, position, startX, startY, worldRectMax, worldRectMin, x, y, _i, _j, _k, _ref1;
-    worldRectMin = TileMap.worldCoordsToTileCoords(worldRect.getMin(), 'floor');
-    worldRectMax = TileMap.worldCoordsToTileCoords(worldRect.getMax(), 'ceil');
-    startX = Math.max(0, worldRectMin.x);
-    startY = Math.max(0, worldRectMin.y);
-    endX = Math.min(this.size.x, worldRectMax.x);
-    endY = Math.min(this.size.y, worldRectMax.y);
-    for (layer = _i = 0, _ref1 = this.layers.length; 0 <= _ref1 ? _i < _ref1 : _i > _ref1; layer = 0 <= _ref1 ? ++_i : --_i) {
-      for (y = _j = startY; startY <= endY ? _j < endY : _j > endY; y = startY <= endY ? ++_j : --_j) {
-        for (x = _k = startX; startX <= endX ? _k < endX : _k > endX; x = startX <= endX ? ++_k : --_k) {
-          position = TILE_SIZE.pairMultiply({
-            x: x,
-            y: y
-          });
-          drawTile(this.mapTileImage, this.layers[layer][y][x], ctx, position);
-        }
-      }
-    }
-    return null;
-  };
-
-  return DrawableTileMap;
-
-})(TileMap);
-
-LogicalTileMap = (function(_super) {
-  __extends(LogicalTileMap, _super);
-
-  function LogicalTileMap() {
-    var args;
-    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    LogicalTileMap.__super__.constructor.apply(this, args);
-    this.data = this.mapData.layers[0];
-  }
-
-  LogicalTileMap.prototype.getValue = function(position) {
-    if ((this.data[position.y] != null) && (this.data[position.y][position.x] != null)) {
-      return this.data[position.y][position.x];
-    } else {
-      return null;
-    }
-  };
-
-  LogicalTileMap.prototype.getIsPath = function(position) {
-    return this.getValue(position) === 1;
-  };
-
-  LogicalTileMap.prototype.getIsDoor = function(position) {
-    return this.getValue(position) === 3;
-  };
-
-  return LogicalTileMap;
-
-})(TileMap);
+TILE_SIZE = require('./store').TILE_SIZE;
 
 approach = function(currentPosition, targetPosition, maxMove) {
   var newPosition;
@@ -24162,6 +23690,382 @@ RandomWalkTileMovementBehavior = (function(_super) {
 
 })(TileMovementBehavior);
 
+module.exports = {
+  Actor: Actor,
+  KeyboardControlledTileMovementBehavior: KeyboardControlledTileMovementBehavior,
+  RandomWalkTileMovementBehavior: RandomWalkTileMovementBehavior
+};
+
+
+
+},{"./color":156,"./geometry":157,"./keyboard":160,"./store":168,"./tileMap":169,"underscore":153}],156:[function(require,module,exports){
+var color, colorScss, line, lineRegex, match, _i, _len, _ref;
+
+colorScss = require('./_dawnbringer.scss');
+
+color = {};
+
+_ref = colorScss.match(/[^\r\n]+/g);
+for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+  line = _ref[_i];
+  lineRegex = /\$(.*): (.*);/g;
+  match = lineRegex.exec(line);
+  if (match) {
+    color[match[1]] = match[2];
+  }
+}
+
+module.exports = color;
+
+
+
+},{"./_dawnbringer.scss":154}],157:[function(require,module,exports){
+var Rect2, Vector2;
+
+Vector2 = (function() {
+  function Vector2(x, y) {
+    this.x = x;
+    this.y = y;
+    if (isNaN(this.x) || isNaN(this.y)) {
+      throw "NaN";
+    }
+  }
+
+  Vector2.prototype.floor = function() {
+    return new Vector2(Math.floor(this.x), Math.floor(this.y));
+  };
+
+  Vector2.prototype.ceil = function() {
+    return new Vector2(Math.ceil(this.x), Math.ceil(this.y));
+  };
+
+  Vector2.prototype.multiply = function(factor) {
+    return new Vector2(this.x * factor, this.y * factor);
+  };
+
+  Vector2.prototype.pairMultiply = function(other) {
+    return new Vector2(this.x * other.x, this.y * other.y);
+  };
+
+  Vector2.prototype.pairDivide = function(other) {
+    return new Vector2(this.x / other.x, this.y / other.y);
+  };
+
+  Vector2.prototype.isEqual = function(other) {
+    return this.x === other.x && this.y === other.y;
+  };
+
+  Vector2.prototype.clone = function() {
+    return new Vector2(this.x, this.y);
+  };
+
+  Vector2.prototype.add = function(other) {
+    return new Vector2(this.x + other.x, this.y + other.y);
+  };
+
+  return Vector2;
+
+})();
+
+Rect2 = (function() {
+  function Rect2(xmin, ymin, xmax, ymax) {
+    this.xmin = xmin;
+    this.ymin = ymin;
+    this.xmax = xmax;
+    this.ymax = ymax;
+    if (isNaN(this.xmin) || isNaN(this.ymin) || isNaN(this.xmax) || isNaN(this.ymax)) {
+      throw "NaN";
+    }
+  }
+
+  Rect2.prototype.getMin = function() {
+    return new Vector2(this.xmin, this.ymin);
+  };
+
+  Rect2.prototype.getMax = function() {
+    return new Vector2(this.xmax, this.ymax);
+  };
+
+  Rect2.fromCenter = function(center, size) {
+    var halfSize;
+    halfSize = size.multiply(0.5);
+    return new Rect2(center.x - halfSize.x, center.y - halfSize.y, center.x + halfSize.x, center.y + halfSize.y);
+  };
+
+  return Rect2;
+
+})();
+
+module.exports = {
+  Vector2: Vector2,
+  Rect2: Rect2
+};
+
+
+
+},{}],158:[function(require,module,exports){
+var GameView, HTKRoot, React, WorldView, color, logic, model, state, _;
+
+_ = require('underscore');
+
+window.React = React = require('react/addons');
+
+state = require('./state');
+
+logic = require('./logic');
+
+model = require('./model');
+
+color = require('./color');
+
+window.keyboardSettings = {
+  playerLeft: 'a',
+  playerRight: 'd',
+  playerUp: 'w',
+  playerDown: 's'
+};
+
+$(function() {
+  return React.renderComponent(HTKRoot(null), $('#htk-root').get(0));
+});
+
+HTKRoot = React.createClass({
+  displayName: 'HTKRoot',
+  render: function() {
+    return React.DOM.div(null, React.DOM.h1({
+      "style": {
+        marginTop: 0
+      },
+      "className": "title"
+    }, "Heal the Kingdoms"), GameView(null), React.DOM.p(null, "Move with WASD. Switch levels with the number keys."));
+  }
+});
+
+GameView = React.createClass({
+  displayName: 'GameView',
+  getInitialState: function() {
+    return {
+      isLoaded: false
+    };
+  },
+  componentDidMount: function() {
+    var imageStore;
+    imageStore = logic.initImages();
+    this.setState({
+      imageStore: imageStore
+    });
+    return imageStore.isComplete.filter(_.identity).onValue((function(_this) {
+      return function() {
+        return _this.setState({
+          isLoaded: true
+        });
+      };
+    })(this));
+  },
+  render: function() {
+    return React.DOM.div(null, !this.state.isLoaded && "Still loading...", this.state.isLoaded && WorldView({
+      "imageStore": this.state.imageStore
+    }));
+  }
+});
+
+WorldView = React.createClass({
+  displayName: 'WorldView',
+  getDefaultProps: function() {
+    return {
+      width: 768,
+      height: 576
+    };
+  },
+  componentDidMount: function() {
+    return logic.initInteractive(this.getDOMNode(), this.props.imageStore);
+  },
+  render: function() {
+    return React.DOM.canvas({
+      "className": "game-view",
+      "width": this.props.width,
+      "height": this.props.height,
+      "style": {
+        width: this.props.width,
+        height: this.props.height,
+        backgroundColor: 'darkgreen'
+      }
+    });
+  }
+});
+
+module.exports = {};
+
+
+
+},{"./color":156,"./logic":161,"./model":166,"./state":167,"react/addons":4,"underscore":153}],159:[function(require,module,exports){
+var x, _,
+  __slice = [].slice;
+
+_ = require('underscore');
+
+module.exports = _.extend.apply(_, [{}].concat(__slice.call([
+  _.object((function() {
+    var _i, _results;
+    _results = [];
+    for (x = _i = 65; _i <= 90; x = ++_i) {
+      _results.push([x, String.fromCharCode(x).toLowerCase()]);
+    }
+    return _results;
+  })()), {
+    32: 'space',
+    13: 'enter',
+    9: 'tab',
+    27: 'esc',
+    8: 'backspace'
+  }, {
+    16: 'shift',
+    17: 'control',
+    18: 'alt',
+    20: 'capslock',
+    144: 'numlock'
+  }, {
+    49: '1',
+    50: '2',
+    51: '3',
+    52: '4',
+    53: '5',
+    54: '6',
+    55: '7',
+    56: '8',
+    57: '9',
+    48: '0'
+  }, {
+    186: ';',
+    187: '=',
+    189: '-',
+    59: ';',
+    61: '=',
+    109: '-',
+    188: ',',
+    190: '.',
+    191: '/',
+    192: '`',
+    219: '[',
+    220: '\\',
+    221: ']',
+    222: '\''
+  }, {
+    37: 'left',
+    38: 'up',
+    39: 'right',
+    40: 'down'
+  }, {
+    45: 'insert',
+    46: 'delete',
+    36: 'home',
+    35: 'end',
+    33: 'pageup',
+    34: 'pagedown'
+  }, _.object((function() {
+    var _i, _results;
+    _results = [];
+    for (x = _i = 1; _i <= 19; x = ++_i) {
+      _results.push([x + 111, "F" + x]);
+    }
+    return _results;
+  })()), {
+    110: '.',
+    96: 'num0',
+    97: 'num1',
+    98: 'num2',
+    99: 'num3',
+    100: 'num4',
+    101: 'num5',
+    102: 'num6',
+    103: 'num7',
+    104: 'num8',
+    105: 'num9',
+    107: 'num+',
+    109: 'num-',
+    106: 'num*',
+    111: 'num/'
+  }, {
+    91: 'start_or_command',
+    92: 'start_or_command',
+    93: 'menu',
+    224: 'start_or_command'
+  }
+])));
+
+
+
+},{"underscore":153}],160:[function(require,module,exports){
+var Bacon, keyCodeToName, keyboard,
+  __slice = [].slice,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+Bacon = require('baconjs');
+
+keyCodeToName = require('./keyCodeToName');
+
+keyboard = (function() {
+  var $document, downs, pressedKeys, ups;
+  pressedKeys = {};
+  $document = $(document);
+  downs = $document.asEventStream('keydown').map(function(e) {
+    return keyCodeToName[e.keyCode];
+  });
+  ups = $document.asEventStream('keyup').map(function(e) {
+    return keyCodeToName[e.keyCode];
+  });
+  downs.onValue(function(k) {
+    return pressedKeys[k] = true;
+  });
+  ups.onValue(function(k) {
+    return pressedKeys[k] = false;
+  });
+  return {
+    getIsKeyDown: function(k) {
+      return !!pressedKeys[k];
+    },
+    downs: function() {
+      var keys;
+      keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      return downs.filter(function(k) {
+        return __indexOf.call(keys, k) >= 0;
+      });
+    },
+    ups: function() {
+      var keys;
+      keys = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      return ups.filter(function(k) {
+        return __indexOf.call(keys, k) >= 0;
+      });
+    }
+  };
+})();
+
+module.exports = keyboard;
+
+
+
+},{"./keyCodeToName":159,"baconjs":2}],161:[function(require,module,exports){
+var Actor, DrawableTileMap, ImageStore, KeyboardControlledTileMovementBehavior, Level, LogicalTileMap, RandomWalkTileMovementBehavior, Rect2, Scene, TwoFrameSubject, Vector2, color, initImages, initInteractive, keyboard, util, _, _ref, _ref1, _ref2, _ref3,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+_ = require('underscore');
+
+util = require('./util');
+
+_ref = require('./geometry'), Vector2 = _ref.Vector2, Rect2 = _ref.Rect2;
+
+color = require('./color');
+
+keyboard = require('./keyboard');
+
+_ref1 = require('./store'), ImageStore = _ref1.ImageStore, TwoFrameSubject = _ref1.TwoFrameSubject;
+
+_ref2 = require('./actor'), Actor = _ref2.Actor, KeyboardControlledTileMovementBehavior = _ref2.KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior = _ref2.RandomWalkTileMovementBehavior;
+
+_ref3 = require('./tileMap'), DrawableTileMap = _ref3.DrawableTileMap, LogicalTileMap = _ref3.LogicalTileMap;
+
 Scene = (function() {
   function Scene() {}
 
@@ -24190,12 +24094,12 @@ Level = (function(_super) {
   }
 
   Level.prototype.init = function(sceneManager) {
-    var npcSubject, playerSubject, position, validPositions, x, y, _i, _j, _ref1, _ref2;
+    var npcSubject, playerSubject, position, validPositions, x, y, _i, _j, _ref4, _ref5;
     this.sceneManager = sceneManager;
     this.actors = [];
     validPositions = [];
-    for (y = _i = 0, _ref1 = this.logicalMap.size.y; 0 <= _ref1 ? _i < _ref1 : _i > _ref1; y = 0 <= _ref1 ? ++_i : --_i) {
-      for (x = _j = 0, _ref2 = this.logicalMap.size.x; 0 <= _ref2 ? _j < _ref2 : _j > _ref2; x = 0 <= _ref2 ? ++_j : --_j) {
+    for (y = _i = 0, _ref4 = this.logicalMap.size.y; 0 <= _ref4 ? _i < _ref4 : _i > _ref4; y = 0 <= _ref4 ? ++_i : --_i) {
+      for (x = _j = 0, _ref5 = this.logicalMap.size.x; 0 <= _ref5 ? _j < _ref5 : _j > _ref5; x = 0 <= _ref5 ? ++_j : --_j) {
         position = new Vector2(x, y);
         if (this.logicalMap.getIsPath(position)) {
           validPositions.push(position);
@@ -24205,7 +24109,7 @@ Level = (function(_super) {
     npcSubject = new TwoFrameSubject(this.imageStore, 'Player', new Vector2(0, 0), 500);
     this.actors.push(new Actor(npcSubject, [new RandomWalkTileMovementBehavior(this.logicalMap, _.choice(validPositions))]));
     playerSubject = new TwoFrameSubject(this.imageStore, 'Player', new Vector2(1, 0), 500);
-    this.player = new Actor(playerSubject, [new KeyboardControlledTileMovementBehavior(this.logicalMap, _.choice(validPositions))]);
+    this.player = new Actor(playerSubject, [new KeyboardControlledTileMovementBehavior(this.logicalMap, this.logicalMap.getPlayerStartingPosition())]);
     this.actors.push(this.player);
     return this.lastTime = Date.now();
   };
@@ -24287,20 +24191,20 @@ module.exports = {
 
 
 
-},{"./color":155,"./geometry":156,"./keyboard":159,"./maps/1_cave":161,"./maps/1_cave_logical":162,"./maps/test":163,"./maps/test_logical":164,"./store":167,"underscore":153}],161:[function(require,module,exports){
+},{"./actor":155,"./color":156,"./geometry":157,"./keyboard":160,"./maps/1_cave":162,"./maps/1_cave_logical":163,"./maps/test":164,"./maps/test_logical":165,"./store":168,"./tileMap":169,"./util":170,"underscore":153}],162:[function(require,module,exports){
 module.exports={"layers": [[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 329, 330, 330, 330, 330, 330, 330, 331, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 329, 379, 400, 401, 401, 401, 401, 402, 377, 331, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 353, 400, 425, 425, 425, 425, 425, 425, 402, 353, 0, 0, 0, 0, 0, 329, 330, 330, 330, 330, 330, 331, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 353, 424, 449, 449, 449, 425, 425, 425, 426, 353, 0, 0, 0, 329, 330, 379, 401, 170, 175, 172, 402, 377, 330, 331, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 353, 427, 329, 330, 331, 448, 449, 449, 426, 377, 331, 0, 0, 353, 400, 425, 425, 194, 195, 196, 425, 425, 402, 353, 0, 0, 0, 0, 0], [0, 329, 330, 330, 330, 331, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 353, 427, 353, 0, 377, 330, 330, 331, 448, 402, 353, 0, 329, 379, 424, 425, 170, 171, 171, 171, 172, 425, 426, 377, 331, 0, 0, 0, 0], [0, 353, 400, 401, 401, 377, 330, 330, 331, 0, 0, 329, 330, 330, 330, 330, 330, 330, 330, 330, 330, 379, 427, 353, 0, 0, 0, 0, 377, 331, 427, 377, 330, 379, 400, 425, 170, 171, 171, 171, 171, 171, 172, 425, 402, 377, 330, 330, 330, 330], [0, 353, 424, 425, 425, 429, 429, 402, 353, 0, 0, 353, 400, 401, 401, 401, 429, 429, 429, 429, 429, 429, 450, 353, 0, 0, 0, 0, 0, 353, 448, 429, 429, 429, 425, 425, 194, 195, 195, 195, 195, 195, 196, 425, 449, 429, 429, 429, 429, 429], [0, 353, 448, 449, 450, 329, 331, 427, 353, 0, 0, 353, 424, 425, 425, 426, 329, 330, 330, 330, 330, 330, 330, 379, 0, 0, 0, 0, 0, 377, 330, 330, 330, 330, 331, 425, 218, 219, 219, 219, 219, 219, 220, 426, 329, 330, 330, 330, 330, 330], [0, 377, 330, 330, 330, 379, 353, 427, 353, 0, 0, 353, 424, 449, 449, 450, 329, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 353, 448, 449, 449, 449, 449, 449, 449, 449, 450, 353, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 353, 427, 353, 0, 0, 353, 427, 329, 330, 330, 379, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 377, 330, 330, 330, 330, 330, 330, 330, 330, 330, 379, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 353, 427, 377, 330, 330, 379, 427, 353, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 353, 448, 429, 429, 429, 429, 450, 353, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 377, 330, 330, 330, 330, 330, 330, 379, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 282, 0, 0, 364, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 305, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 0, 340, 341, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 364, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 280, 0, 280, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 307, 0, 0, 280, 0, 280, 0, 0, 308, 0, 0, 0, 0, 0, 0], [0, 0, 363, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 283, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 280, 0, 0, 0, 280, 13, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 363, 0, 0, 0, 0, 0, 0, 282, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 362, 0, 0, 0, 280, 0, 0, 0, 0, 0, 280, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 284, 0, 0, 0, 0, 316, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 195, 195, 195, 195, 195, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 317, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 283, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 283, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 281, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]]}
-},{}],162:[function(require,module,exports){
-module.exports={"layers": [[[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1, 1, 2, 1, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 2, 2], [2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 1, 1, 1, 2, 2, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]]]}
 },{}],163:[function(require,module,exports){
-module.exports={"layers": [[[202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 226, 226, 226, 226, 226, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 227, 267, 3, 3, 3, 267, 225, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 203, 267, 249, 250, 250, 250, 251, 267, 201, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 203, 3, 274, 274, 274, 274, 275, 3, 201, 202, 202, 202, 202, 202, 267, 267, 267, 202, 202], [202, 203, 3, 3, 3, 3, 3, 3, 3, 201, 202, 202, 202, 202, 202, 267, 267, 267, 267, 202], [202, 202, 178, 178, 178, 178, 178, 178, 178, 202, 202, 202, 202, 175, 202, 175, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 175, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 205, 178, 178, 178, 178, 178, 178, 178, 178, 178, 202, 202, 202], [202, 202, 202, 202, 202, 267, 267, 267, 201, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 267, 267, 267, 267, 225, 202, 202, 267, 3, 3, 3, 3, 3, 202, 267, 202], [202, 202, 202, 267, 267, 267, 267, 267, 267, 202, 202, 267, 274, 274, 274, 274, 274, 274, 274, 202], [202, 267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 274, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 267, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 202, 274, 274, 274, 274, 274, 267, 267, 202], [267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 267, 202, 202, 202]], [[41, 41, 41, 41, 41, 42, 0, 0, 0, 0, 19, 0, 0, 203, 197, 201, 0, 0, 0, 0], [41, 42, 65, 64, 41, 66, 0, 19, 0, 0, 0, 0, 0, 203, 197, 201, 0, 19, 0, 0], [65, 66, 0, 64, 66, 0, 0, 0, 0, 0, 0, 0, 0, 203, 197, 201, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 19, 0, 203, 197, 201, 0, 0, 0, 0], [0, 0, 0, 2, 3, 0, 0, 4, 0, 0, 0, 0, 0, 203, 197, 201, 0, 0, 226, 0], [0, 19, 2, 52, 0, 0, 0, 50, 4, 0, 0, 0, 13, 203, 197, 225, 226, 227, 267, 201], [0, 0, 26, 0, 0, 0, 0, 0, 26, 0, 0, 0, 226, 227, 197, 0, 32, 0, 267, 201], [0, 0, 0, 0, 0, 149, 0, 0, 0, 0, 0, 203, 170, 171, 195, 171, 172, 267, 32, 201], [18, 0, 0, 0, 179, 173, 177, 0, 0, 0, 0, 203, 194, 19, 195, 19, 196, 267, 177, 0], [17, 17, 18, 0, 203, 197, 225, 226, 226, 226, 226, 227, 194, 195, 19, 195, 196, 177, 0, 0], [41, 41, 42, 0, 203, 218, 171, 199, 199, 199, 199, 199, 219, 219, 219, 219, 220, 201, 0, 0], [40, 41, 41, 42, 0, 207, 197, 0, 178, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [41, 41, 66, 66, 203, 0, 197, 0, 0, 0, 0, 226, 226, 226, 226, 226, 226, 226, 226, 0], [41, 42, 0, 226, 227, 0, 197, 0, 37, 0, 203, 2, 0, 0, 0, 0, 0, 3, 4, 0], [41, 66, 227, 0, 177, 179, 197, 0, 0, 225, 227, 27, 0, 0, 0, 0, 0, 0, 26, 201], [66, 227, 0, 205, 202, 203, 175, 199, 199, 199, 199, 150, 0, 0, 0, 0, 0, 0, 26, 201], [0, 184, 186, 0, 225, 227, 197, 0, 177, 178, 207, 6, 0, 0, 0, 0, 0, 0, 26, 201], [0, 208, 209, 186, 0, 0, 197, 0, 201, 0, 179, 26, 0, 0, 0, 0, 0, 0, 26, 201], [184, 209, 209, 209, 0, 0, 197, 177, 0, 0, 203, 26, 0, 0, 0, 0, 2, 3, 52, 201], [209, 209, 209, 209, 0, 0, 197, 201, 0, 0, 203, 50, 3, 3, 3, 3, 52, 177, 178, 0]]]}
+module.exports={"layers": [[[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1, 1, 2, 1, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 2, 2], [2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 1, 1, 1, 2, 2, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]]]}
 },{}],164:[function(require,module,exports){
-module.exports={"layers": [[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 2, 2, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 2, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1]]]}
+module.exports={"layers": [[[202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 226, 226, 226, 226, 226, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 227, 267, 3, 3, 3, 267, 225, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 203, 267, 249, 250, 250, 250, 251, 267, 201, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 203, 3, 274, 274, 274, 274, 275, 3, 201, 202, 202, 202, 202, 202, 267, 267, 267, 202, 202], [202, 203, 3, 3, 3, 3, 3, 3, 3, 201, 202, 202, 202, 202, 202, 267, 267, 267, 267, 202], [202, 202, 178, 178, 178, 178, 178, 178, 178, 202, 202, 202, 202, 175, 202, 175, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 175, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 202, 202, 202, 205, 178, 178, 178, 178, 178, 178, 178, 178, 178, 202, 202, 202], [202, 202, 202, 202, 202, 267, 267, 267, 201, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202], [202, 202, 202, 202, 267, 267, 267, 267, 225, 202, 202, 267, 3, 3, 3, 3, 3, 202, 267, 202], [202, 202, 202, 267, 267, 267, 267, 267, 267, 202, 202, 267, 274, 274, 274, 274, 274, 274, 274, 202], [202, 267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 274, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 267, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 274, 274, 274, 274, 274, 274, 274, 202], [267, 267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 202, 274, 274, 274, 274, 274, 267, 267, 202], [267, 267, 267, 267, 267, 267, 202, 202, 202, 202, 202, 202, 202, 202, 202, 202, 267, 202, 202, 202]], [[41, 41, 41, 41, 41, 42, 0, 0, 0, 0, 19, 0, 0, 203, 197, 201, 0, 0, 0, 0], [41, 42, 65, 64, 41, 66, 0, 19, 0, 0, 0, 0, 0, 203, 197, 201, 0, 19, 0, 0], [65, 66, 0, 64, 66, 0, 0, 0, 0, 0, 0, 0, 0, 203, 197, 201, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 19, 0, 203, 197, 201, 0, 0, 0, 0], [0, 0, 0, 2, 3, 0, 0, 4, 0, 0, 0, 0, 0, 203, 197, 201, 0, 0, 226, 0], [0, 19, 2, 52, 0, 0, 0, 50, 4, 0, 0, 0, 13, 203, 197, 225, 226, 227, 267, 201], [0, 0, 26, 0, 0, 0, 0, 0, 26, 0, 0, 0, 226, 227, 197, 0, 32, 0, 267, 201], [0, 0, 0, 0, 0, 149, 0, 0, 0, 0, 0, 203, 170, 171, 195, 171, 172, 267, 32, 201], [18, 0, 0, 0, 179, 173, 177, 0, 0, 0, 0, 203, 194, 19, 195, 19, 196, 267, 177, 0], [17, 17, 18, 0, 203, 197, 225, 226, 226, 226, 226, 227, 194, 195, 19, 195, 196, 177, 0, 0], [41, 41, 42, 0, 203, 218, 171, 199, 199, 199, 199, 199, 219, 219, 219, 219, 220, 201, 0, 0], [40, 41, 41, 42, 0, 207, 197, 0, 178, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [41, 41, 66, 66, 203, 0, 197, 0, 0, 0, 0, 226, 226, 226, 226, 226, 226, 226, 226, 0], [41, 42, 0, 226, 227, 0, 197, 0, 37, 0, 203, 2, 0, 0, 0, 0, 0, 3, 4, 0], [41, 66, 227, 0, 177, 179, 197, 0, 0, 225, 227, 27, 0, 0, 0, 0, 0, 0, 26, 201], [66, 227, 0, 205, 202, 203, 175, 199, 199, 199, 199, 150, 0, 0, 0, 0, 0, 0, 26, 201], [0, 184, 186, 0, 225, 227, 197, 0, 177, 178, 207, 6, 0, 0, 0, 0, 0, 0, 26, 201], [0, 208, 209, 186, 0, 0, 197, 0, 201, 0, 179, 26, 0, 0, 0, 0, 0, 0, 26, 201], [184, 209, 209, 209, 0, 0, 197, 177, 0, 0, 203, 26, 0, 0, 0, 0, 2, 3, 52, 201], [209, 209, 209, 209, 0, 0, 197, 201, 0, 0, 203, 50, 3, 3, 3, 3, 52, 177, 178, 0]]]}
 },{}],165:[function(require,module,exports){
+module.exports={"layers": [[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 2, 2, 2, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 2, 2, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1]]]}
+},{}],166:[function(require,module,exports){
 module.exports = {};
 
 
 
-},{}],166:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 var getItem, setItem, _;
 
 _ = require('underscore');
@@ -24343,7 +24247,7 @@ module.exports = {
 
 
 
-},{"underscore":153}],167:[function(require,module,exports){
+},{"underscore":153}],168:[function(require,module,exports){
 var Bacon, ImageStore, PRELOAD, Rect2, SRC_TILE_SIZE, TILE_SIZE, TileType, TwoFrameSubject, Vector2, drawTile, getImageUrl, _, _ref;
 
 Bacon = require('baconjs');
@@ -24441,4 +24345,169 @@ module.exports = {
 
 
 
-},{"./geometry":156,"baconjs":2,"underscore":153}]},{},[1])
+},{"./geometry":157,"baconjs":2,"underscore":153}],169:[function(require,module,exports){
+var DrawableTileMap, LogicalTileMap, Rect2, SRC_TILE_SIZE, TILE_SIZE, TileMap, Vector2, drawTile, _, _ref, _ref1,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+  __slice = [].slice;
+
+_ = require('underscore');
+
+_ref = require('./geometry'), Vector2 = _ref.Vector2, Rect2 = _ref.Rect2;
+
+_ref1 = require('./store'), TILE_SIZE = _ref1.TILE_SIZE, drawTile = _ref1.drawTile, SRC_TILE_SIZE = _ref1.SRC_TILE_SIZE;
+
+TileMap = (function() {
+  TileMap.worldCoordsToTileCoords = function(worldPoint, floorOrCeil) {
+    if (floorOrCeil == null) {
+      floorOrCeil = 'floor';
+    }
+    return worldPoint.pairDivide(TILE_SIZE)[floorOrCeil]();
+  };
+
+  TileMap.tileCoordsToWorldCoords = function(tilePoint) {
+    return tilePoint.pairMultiply(TILE_SIZE);
+  };
+
+  function TileMap(mapData) {
+    this.mapData = mapData;
+    this.size = new Vector2(this.mapData.layers[0][0].length, this.mapData.layers[0].length);
+  }
+
+  return TileMap;
+
+})();
+
+DrawableTileMap = (function(_super) {
+  __extends(DrawableTileMap, _super);
+
+  function DrawableTileMap() {
+    var args, imageColumns, mapTileImage;
+    mapTileImage = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+    this.mapTileImage = mapTileImage;
+    DrawableTileMap.__super__.constructor.apply(this, args);
+    imageColumns = this.mapTileImage.width / SRC_TILE_SIZE.x;
+    this.layers = _.map(this.mapData.layers, function(layer) {
+      return _.map(layer, function(row) {
+        return _.map(row, function(index) {
+          index -= 1;
+          return new Vector2(index % imageColumns, Math.floor(index / imageColumns));
+        });
+      });
+    });
+  }
+
+  DrawableTileMap.prototype.render = function(ctx, worldRect) {
+    var endX, endY, layer, position, startX, startY, worldRectMax, worldRectMin, x, y, _i, _j, _k, _ref2;
+    worldRectMin = TileMap.worldCoordsToTileCoords(worldRect.getMin(), 'floor');
+    worldRectMax = TileMap.worldCoordsToTileCoords(worldRect.getMax(), 'ceil');
+    startX = Math.max(0, worldRectMin.x);
+    startY = Math.max(0, worldRectMin.y);
+    endX = Math.min(this.size.x, worldRectMax.x);
+    endY = Math.min(this.size.y, worldRectMax.y);
+    for (layer = _i = 0, _ref2 = this.layers.length; 0 <= _ref2 ? _i < _ref2 : _i > _ref2; layer = 0 <= _ref2 ? ++_i : --_i) {
+      for (y = _j = startY; startY <= endY ? _j < endY : _j > endY; y = startY <= endY ? ++_j : --_j) {
+        for (x = _k = startX; startX <= endX ? _k < endX : _k > endX; x = startX <= endX ? ++_k : --_k) {
+          position = TILE_SIZE.pairMultiply({
+            x: x,
+            y: y
+          });
+          drawTile(this.mapTileImage, this.layers[layer][y][x], ctx, position);
+        }
+      }
+    }
+    return null;
+  };
+
+  return DrawableTileMap;
+
+})(TileMap);
+
+LogicalTileMap = (function(_super) {
+  __extends(LogicalTileMap, _super);
+
+  function LogicalTileMap() {
+    var args;
+    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    LogicalTileMap.__super__.constructor.apply(this, args);
+    this.data = this.mapData.layers[0];
+  }
+
+  LogicalTileMap.prototype.getPlayerStartingPosition = function() {
+    var col, row, _i, _j, _ref2, _ref3;
+    for (row = _i = 0, _ref2 = this.data.length; 0 <= _ref2 ? _i < _ref2 : _i > _ref2; row = 0 <= _ref2 ? ++_i : --_i) {
+      for (col = _j = 0, _ref3 = this.data[row].length; 0 <= _ref3 ? _j < _ref3 : _j > _ref3; col = 0 <= _ref3 ? ++_j : --_j) {
+        if (this.data[row][col] === 1) {
+          return new Vector2(col, row);
+        }
+      }
+    }
+    throw "No player starting position found";
+  };
+
+  LogicalTileMap.prototype.getValue = function(position) {
+    if ((this.data[position.y] != null) && (this.data[position.y][position.x] != null)) {
+      return this.data[position.y][position.x];
+    } else {
+      return null;
+    }
+  };
+
+  LogicalTileMap.prototype.getIsPath = function(position) {
+    return this.getValue(position) === 1;
+  };
+
+  LogicalTileMap.prototype.getIsDoor = function(position) {
+    return this.getValue(position) === 3;
+  };
+
+  return LogicalTileMap;
+
+})(TileMap);
+
+module.exports = {
+  TileMap: TileMap,
+  DrawableTileMap: DrawableTileMap,
+  LogicalTileMap: LogicalTileMap
+};
+
+
+
+},{"./geometry":157,"./store":168,"underscore":153}],170:[function(require,module,exports){
+var _;
+
+_ = require('underscore');
+
+window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.oRequestAnimationFrame;
+
+_.choice = function(options, weights, totalWeight) {
+  var i, r, total, upto, _i, _ref;
+  if (weights == null) {
+    weights = null;
+  }
+  if (totalWeight == null) {
+    totalWeight = null;
+  }
+  if (!(options != null ? options.length : void 0)) {
+    return null;
+  }
+  if (!weights) {
+    return options[_.random(0, options.length - 1)];
+  }
+  total = totalWeight || _.sum(weights);
+  r = Math.random() * total;
+  upto = 0;
+  for (i = _i = 0, _ref = weights.length; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+    if (upto + weights[i] > r) {
+      return options[i];
+    }
+    upto += weights[i];
+  }
+  throw "Shouldn't get here";
+};
+
+module.exports = {};
+
+
+
+},{"underscore":153}]},{},[1])
