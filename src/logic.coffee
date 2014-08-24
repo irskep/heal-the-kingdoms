@@ -185,59 +185,79 @@ class RandomWalkTileMovementBehavior extends TileMovementBehavior
       @greenLightTime = Date.now() + _.random(500, 2000)
 
 
-init = (canvas) ->
-  canvasSize = new Vector2(canvas.width, canvas.height)
+class Scene
+  update: (t) -> throw "Not implemented"
+  render: (ctx) -> throw "Not implemented"
 
-  imageStore = new ImageStore ->
-    drawableMap = new DrawableTileMap(
-      imageStore.images['tiles'], testMapDrawData)
-    logicalMap = new LogicalTileMap(testMapLogicalData)
 
-    actors = []
+class Level extends Scene
+  constructor: (@imageStore, @logicalData, @drawData, @scripts) ->
+    @drawableMap = new DrawableTileMap(
+      @imageStore.images['tiles'], @drawData)
+    @logicalMap = new LogicalTileMap(@logicalData)
+    @actors = []
 
     npcSubject = new TwoFrameSubject(
-      imageStore, 'Player', new Vector2(0, 0), 500)
-    actors.push new Actor(npcSubject, [
-      new RandomWalkTileMovementBehavior(logicalMap, new Vector2(5, 5)),
+      @imageStore, 'Player', new Vector2(0, 0), 500)
+    @actors.push new Actor(npcSubject, [
+      new RandomWalkTileMovementBehavior(@logicalMap, new Vector2(5, 5)),
     ])
 
     playerSubject = new TwoFrameSubject(
-      imageStore, 'Player', new Vector2(1, 0), 500)
-    player = new Actor(playerSubject, [
+      @imageStore, 'Player', new Vector2(1, 0), 500)
+    @player = new Actor(playerSubject, [
       new KeyboardControlledTileMovementBehavior(
-        logicalMap, new Vector2(10, 10)),
+        @logicalMap, new Vector2(10, 10)),
     ])
-    actors.push player
+    @actors.push @player
 
-    ctx = canvas.getContext('2d')
+  init: (@sceneManager) ->
+    console.log 'init scene'
+    @lastTime = Date.now()
 
-    update = (dt) ->
-      _.each actors, (a) -> a.update(dt)
+  update: ->
+    dt = (Date.now() - @lastTime) / 1000
+    @lastTime = Date.now()
+    _.each @actors, (a) -> a.update(dt)
 
-    render = ->
-      ctx.fillStyle = color.darkgreen
-      ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
-      ctx.save()
-      mapCenter = player.getCenter().floor()
+  render: (ctx, canvasSize) ->
+    ctx.save()
+    ctx.fillStyle = color.darkgreen
+    ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+    mapCenter = @player.getCenter().floor()
 
-      ctx.translate(
-        -mapCenter.x + canvasSize.x / 2,
-        -mapCenter.y + canvasSize.y / 2)
+    ctx.translate(
+      -mapCenter.x + canvasSize.x / 2,
+      -mapCenter.y + canvasSize.y / 2)
 
-      drawableMap.render(ctx, Rect2.fromCenter(mapCenter, canvasSize))
-      _.each actors, (a) -> a.render(ctx)
-      ctx.restore()
+    @drawableMap.render(ctx, Rect2.fromCenter(mapCenter, canvasSize))
+    _.each @actors, (a) -> a.render(ctx)
+    ctx.restore()
 
-    lastTime = Date.now()
-    run = ->
-      newTime = Date.now()
-      dt = (newTime - lastTime) / 1000
-      lastTime = newTime
-      update(dt)
-      render()
-      requestAnimationFrame(run)
-      null
+
+initImages = -> new ImageStore()
+
+
+initInteractive = (canvas, imageStore, firstScene=null) ->
+  canvasSize = new Vector2(canvas.width, canvas.height)
+  ctx = canvas.getContext('2d')
+
+  currentScene = null
+
+  sceneManager =
+    setScene: (newScene) ->
+      currentScene?.teardown?()
+      currentScene = newScene
+      currentScene.init(sceneManager)
+
+  sceneManager.setScene(firstScene or new Level(
+    imageStore, testMapLogicalData, testMapDrawData, {}))
+
+  run = ->
+    currentScene?.update()
+    currentScene?.render(ctx, canvasSize)
     requestAnimationFrame(run)
+  requestAnimationFrame(run)
 
 
-module.exports = {init}
+module.exports = {initImages, initInteractive}

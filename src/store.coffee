@@ -1,3 +1,4 @@
+Bacon = require 'baconjs'
 _ = require 'underscore'
 {Vector2, Rect2} = require './geometry'
 
@@ -34,18 +35,20 @@ getImageUrl = (identifier) -> "img/#{identifier}.png"
 
 
 class ImageStore
-  constructor: (@loadedCallback) ->
+  constructor: ->
     @images = {}
     @loadedCount = 0
+    completes = new Bacon.Bus()
+    @isComplete = completes.map(true).toProperty(false)
 
-    for identifier in PRELOAD
+    _.each PRELOAD, (identifier) =>
       img = new Image()
       src = getImageUrl(identifier)
       @images[identifier] = img
       img.onload = =>
         @loadedCount += 1
         if @loadedCount == _.size @images
-          @loadedCallback()
+          completes.push()
       img.src = src
 
 

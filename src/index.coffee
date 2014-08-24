@@ -30,9 +30,23 @@ HTKRoot = React.createClass
 
 GameView = React.createClass
   displayName: 'GameView'
+  getInitialState: -> {isLoaded: false}
+  componentDidMount: ->
+    imageStore = logic.initImages()
+    @setState {imageStore}
+    imageStore.isComplete.filter(_.identity).onValue =>
+      @setState {isLoaded: true}
+  render: ->
+    <div>
+      {!@state.isLoaded and "Still loading..."}
+      {@state.isLoaded && <WorldView imageStore={@state.imageStore} />}
+    </div>
+
+WorldView = React.createClass
+  displayName: 'WorldView'
   getDefaultProps: -> {width: 768, height: 576}
-  componentDidMount: -> @stop = logic.init(this.getDOMNode())
-  componentWillUnmount: -> @stop
+  componentDidMount: ->
+    logic.initInteractive(@getDOMNode(), @props.imageStore)
   render: ->
     <canvas className="game-view"
         width={@props.width} height={@props.height}
