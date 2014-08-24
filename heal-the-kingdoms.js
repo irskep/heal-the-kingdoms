@@ -23991,8 +23991,9 @@ Actor = (function() {
 })();
 
 TileMovementBehavior = (function() {
-  function TileMovementBehavior(tilePosition) {
+  function TileMovementBehavior(tilePosition, speed) {
     this.tilePosition = tilePosition;
+    this.speed = speed;
   }
 
   TileMovementBehavior.prototype.init = function(actor) {
@@ -24009,11 +24010,10 @@ TileMovementBehavior = (function() {
   };
 
   TileMovementBehavior.prototype.update = function(dt) {
-    var SPEED, SPEED_PX;
-    SPEED = 4;
-    SPEED_PX = TILE_SIZE.multiply(SPEED);
+    var speedVector;
+    speedVector = TILE_SIZE.multiply(this.speed);
     if (!this.actor.worldPosition.isEqual(this.targetWorldPosition)) {
-      this.actor.worldPosition = approach(this.actor.worldPosition, this.targetWorldPosition, SPEED_PX.multiply(dt));
+      this.actor.worldPosition = approach(this.actor.worldPosition, this.targetWorldPosition, speedVector.multiply(dt));
     }
     if (this.getShouldDecide()) {
       return this.decide();
@@ -24035,25 +24035,30 @@ TileMovementBehavior = (function() {
 RandomWalkTileMovementBehavior = (function(_super) {
   __extends(RandomWalkTileMovementBehavior, _super);
 
-  function RandomWalkTileMovementBehavior() {
-    var args, logicalMap;
-    logicalMap = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+  function RandomWalkTileMovementBehavior(logicalMap, tilePosition, speed) {
     this.logicalMap = logicalMap;
-    RandomWalkTileMovementBehavior.__super__.constructor.apply(this, args);
+    this.tilePosition = tilePosition;
+    this.speed = speed != null ? speed : 3;
+    RandomWalkTileMovementBehavior.__super__.constructor.call(this, this.tilePosition, this.speed);
+    this.greenLightTime = Date.now();
   }
 
   RandomWalkTileMovementBehavior.prototype.decide = function() {
     var chosenChange, possibleChanges;
+    if (!(Date.now() >= this.greenLightTime)) {
+      return;
+    }
     possibleChanges = [new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, -1), new Vector2(0, 1)];
-    chosenChange = _.choice(_.filter(possibleChanges, (function(_this) {
+    chosenChange = _.choice([null].concat(_.filter(possibleChanges, (function(_this) {
       return function(change) {
         return _this.logicalMap.getIsWalkable(_this.tilePosition.add(change));
       };
-    })(this)));
-    if (!chosenChange) {
-      return;
+    })(this))));
+    if (chosenChange) {
+      return this.setTilePosition(this.tilePosition.add(chosenChange));
+    } else {
+      return this.greenLightTime = Date.now() + _.random(500, 2000);
     }
-    return this.setTilePosition(this.tilePosition.add(chosenChange));
   };
 
   return RandomWalkTileMovementBehavior;
@@ -24068,7 +24073,7 @@ init = function(canvas) {
     logicalMap = new LogicalTileMap(testMapLogicalData);
     actors = [];
     npcSubject = new TwoFrameSubject(imageStore, 'Player', new Vector2(0, 0), 500);
-    actors.push(new Actor(npcSubject, [new RandomWalkTileMovementBehavior(logicalMap, new Vector2(10, 10))]));
+    actors.push(new Actor(npcSubject, [new RandomWalkTileMovementBehavior(logicalMap, new Vector2(5, 5))]));
     ctx = canvas.getContext('2d');
     update = function(dt) {
       return _.each(actors, function(a) {
