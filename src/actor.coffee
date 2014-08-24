@@ -34,7 +34,7 @@ class Actor
 
 
 class TileMovementBehavior
-  constructor: (@tilePosition, @speed) ->
+  constructor: (@tilePosition, @speed=2) ->
 
   init: (@actor) ->
     @actor.worldPosition = TileMap.tileCoordsToWorldCoords(@tilePosition)
@@ -89,7 +89,7 @@ class KeyboardControlledTileMovementBehavior extends TileMovementBehavior
 
 class RandomWalkTileMovementBehavior extends TileMovementBehavior
 
-  constructor: (@logicalMap, @tilePosition, @speed=3) ->
+  constructor: (@logicalMap, @tilePosition, @speed=2) ->
     super(@tilePosition, @speed)
     @greenLightTime = Date.now()
 
@@ -110,6 +110,48 @@ class RandomWalkTileMovementBehavior extends TileMovementBehavior
       @greenLightTime = Date.now() + _.random(500, 2000)
 
 
+class AttackBehavior extends TileMovementBehavior
+
+  constructor: ({@logicalMap, @tilePosition, @getTarget, @onHit}) ->
+    super(@tilePosition)
+    @moveTime = Date.now()
+    #@stabOn = 0
+    #@stabOff = 0
+
+  update: (dt) ->
+    super(dt)
+
+    target = @getTarget()
+    return unless target
+    distanceToTarget = (
+      target.worldPosition.subtract(@actor.worldPosition).getLength())
+    if distanceToTarget < TILE_SIZE.x / 3
+      @onHit(target)
+
+  decide: ->
+    return unless Date.now() >= @moveTime
+    maybeChanges = _.shuffle [
+      new Vector2(-1, 0),
+      new Vector2(1, 0),
+      new Vector2(0, -1),
+      new Vector2(0, 1),
+    ]
+    possibleChanges = _.filter maybeChanges, (change) =>
+      @logicalMap.getIsPath(@tilePosition.add(change))
+
+    target = @getTarget()
+    return unless target
+    chosenChange = _.min possibleChanges, (change) =>
+      target.tilePosition.subtract(@tilePosition.add(change)).getLength()
+    debugger if keyboard.getIsKeyDown('q')
+
+    if chosenChange
+      @setTilePosition @tilePosition.add chosenChange
+    else
+      @moveTime = Date.now() + _.random(250)
+
+
 module.exports = {
-  Actor, KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior
+  Actor, KeyboardControlledTileMovementBehavior,
+  RandomWalkTileMovementBehavior, AttackBehavior
 }

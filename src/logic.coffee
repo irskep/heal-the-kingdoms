@@ -8,9 +8,7 @@ color = require './color'
 keyboard = require './keyboard'
 {TwoFrameSubject, TileSubject, TILE_SIZE, SRC_TILE_SIZE} = require './subject'
 {ImageStore} = require './imageStore'
-{
-  Actor, KeyboardControlledTileMovementBehavior, RandomWalkTileMovementBehavior
-} = require './actor'
+actor = require './actor'
 
 {InventoryItem} = require './inventory'
 {DrawableTileMap, LogicalTileMap, InventoryMap} = require './tileMap'
@@ -41,6 +39,29 @@ class TitleScreen
 
     ctx.font = '48pt Niconne'
     ctx.fillText("Press #{window.keyboardSettings.playerAction} to begin.",
+      canvasSize.x / 2, canvasSize.y / 1.6)
+    ctx.restore()
+
+
+class Retry
+  constructor: (@next) ->
+  init: (@sceneManager) ->
+    keyboard.downs(window.keyboardSettings.playerAction).take(1)
+      .onValue ({event}) =>
+        event.preventDefault()
+        @sceneManager.setScene @sceneManager.scenes[@next]
+  update: ->
+  render: (ctx, canvasSize) ->
+    ctx.save()
+    ctx.fillStyle = color.black
+    ctx.fillRect(0, 0, canvasSize.x, canvasSize.y);
+    ctx.font = '64pt Niconne'
+    ctx.textAlign = 'center'
+    ctx.fillStyle = color.yellow
+    ctx.fillText "You were killed.", canvasSize.x / 2, canvasSize.y / 3
+
+    ctx.font = '48pt Niconne'
+    ctx.fillText("Press #{window.keyboardSettings.playerAction} to try again.",
       canvasSize.x / 2, canvasSize.y / 1.6)
     ctx.restore()
 
@@ -95,17 +116,29 @@ class Level extends Scene
       @imageStore.images['DawnLike_3/Items/Boot'], validPositions,
       @logicalData)
 
+    kill = (target) =>
+      @npcs = _.without @npcs, target
+      @actors = _.without @actors, target
+      if target == @player
+        @scripts.onPlayerDeath?(target)
+      else
+        @scripts.onNPCDeath?(target)
+
     @npcs = []
     npcSubject = new TwoFrameSubject(@imageStore, 'Player', 0, 500)
-    @npcs.push new Actor(npcSubject, [
-      new RandomWalkTileMovementBehavior(
-        @logicalMap, _.choice(validPositions)),
+    @npcs.push new actor.Actor(npcSubject, [
+      new actor.AttackBehavior({
+        @logicalMap,
+        tilePosition: _.choice(validPositions),
+        getTarget: (=> @player),
+        onHit: (=> kill(@player))
+      })
     ])
     _.each @npcs, (npc) => @actors.push(npc)
 
     playerSubject = new TwoFrameSubject(@imageStore, 'Player', 1, 500)
-    @player = new Actor(playerSubject, [
-      new KeyboardControlledTileMovementBehavior(
+    @player = new actor.Actor(playerSubject, [
+      new actor.KeyboardControlledTileMovementBehavior(
         @logicalMap, @logicalMap.getPlayerStartingPosition()),
     ])
     @actors.push @player
@@ -122,9 +155,7 @@ class Level extends Scene
       stabTarget = _.find @npcs, (npc) ->
         npc.tilePosition.isEqual(stabTargetPosition)
       if stabTarget
-        @npcs = _.without @npcs, stabTarget
-        @actors = _.without @actors, stabTarget
-        @scripts.onDeath?(stabTarget)
+        kill(stabTarget)
     )
 
     @teardowns.push(keyboard.downs(window.keyboardSettings.playerAction)
@@ -211,7 +242,8 @@ initInteractive = (imageStore) ->
       logicalData: require('./maps/test_logical'),
       drawData: require('./maps/test'),
       scripts: {
-        onDeath: (stabTarget) -> console.log "You killed", stabTarget
+        onPlayerDeath: -> sceneManager.setScene(new Retry('0-level'))
+        onNPCDeath: (stabTarget) -> console.log "You killed", stabTarget
       }}),
     "1-preamble": new Preamble({
       text: "You are about to begin level 1."

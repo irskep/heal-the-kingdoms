@@ -8,8 +8,9 @@ class Vector2
   pairDivide: (other) -> new Vector2(@x / other.x, @y / other.y)
   isEqual: (other) -> @x == other.x and @y == other.y
   clone: -> new Vector2(@x, @y)
-
   add: (other) -> new Vector2(@x + other.x, @y + other.y)
+  subtract: (other) -> new Vector2(@x - other.x, @y - other.y)
+  getLength: -> Math.sqrt(@x * @x + @y * @y)
 
 
 class Rect2
