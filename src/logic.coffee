@@ -68,8 +68,10 @@ class Retry
 class Preamble
   constructor: ({@text, @nextScene}) ->
   init: (@sceneManager) ->
-    keyboard.downs(window.keyboardSettings.playerAction).take(1).onValue =>
-      @sceneManager.setScene @sceneManager.scenes[@nextScene]
+    keyboard.downs(window.keyboardSettings.playerAction).take(1)
+      .onValue ({event}) =>
+        event.preventDefault()
+        @sceneManager.setScene @sceneManager.scenes[@nextScene]
   update: ->
   render: (ctx, canvasSize) ->
     ctx.save()

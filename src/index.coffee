@@ -51,8 +51,6 @@ GameView = React.createClass
       <div>
         <p>
           Move with WASD. Drop items by clicking on them in the inventory bar.
-
-          Switch levels with the number keys. 
         </p>
         <Inventory items={@state.gameState.inventory}
                    sceneManager={@state.sceneManager} />
@@ -87,7 +85,9 @@ InventoryItem = React.createClass
       .multiply(-1)
 
     @transferPropsTo <div className="pixel-art-sprite" style={{
-        width: TILE_SIZE.x, height: TILE_SIZE.y, position: 'relative',
+        width: TILE_SIZE.x, height: TILE_SIZE.y,
+        position: 'relative',
+        cursor: 'pointer',
         overflow: 'hidden',
         backgroundImage: "url(#{tileSubject.sourceImage.src})",
         backgroundPosition: "#{offset.x}px #{offset.y}px",
